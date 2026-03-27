@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONSTITUIÇÃO QUEST — O Jogo</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --bg: #050a14;
+  --panel: #0a1628;
+  --border: #1a3a6a;
+  --gold: #f5c518;
+  --gold2: #ffdd44;
+  --cyan: #00e5ff;
+  --green: #00ff88;
+  --red: #ff3355;
+  --purple: #bb44ff;
+  --white: #e8f4ff;
+  --dim: #4a6a8a;
+  --pixel: 'Press Start 2P', monospace;
+  --tech: 'Orbitron', monospace;
+  --mono: 'Share Tech Mono', monospace;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--mono);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* SCANLINES */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none; z-index: 9998;
+}
+
+/* STARS */
+#stars {
+  position: fixed; inset: 0; overflow: hidden; z-index: 0;
+}
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--d, 3s) ease-in-out infinite alternate;
+}
+@keyframes twinkle { from { opacity: 0.1; } to { opacity: 0.8; } }
+
+/* SCREENS */
+.screen {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 100;
+  transition: opacity 0.4s;
+}
+.screen.hidden { opacity: 0; pointer-events: none; }
+
+/* =================== TELA INICIAL =================== */
+#screen-intro {
+  gap: 0;
+}
+
+.intro-top {
+  text-align: center;
+  animation: fadeInDown 0.8s ease;
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.intro-badge {
+  font-family: var(--pixel);
+  font-size: 9px;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+  animation: blink 1.5s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.intro-logo {
+  font-family: var(--tech);
+  font-weight: 900;
+  font-size: clamp(28px, 5vw, 52px);
+  line-height: 1;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold2) 40%, #fff 60%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 20px rgba(245,197,24,0.5));
+  margin-bottom: 6px;
+}
+
+.intro-sub {
+  font-family: var(--pixel);
+  font-size: 8px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+  margin-bottom: 30px;
+  text-shadow: 0 0 10px var(--cyan);
+}
+
+/* SPRITE CONSTITUIÇÃO */
+.sprite-cf {
+  width: 80px; height: 110px;
+  margin: 20px auto;
+  position: relative;
+  animation: floatSprite 3s ease-in-out infinite;
+  filter: drop-shadow(0 8px 20px rgba(245,197,24,0.4));
+}
+@keyframes floatSprite {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+.sprite-cf svg { width: 100%; height: 100%; }
+
+.intro-stats {
+  display: flex; gap: 30px;
+  margin: 20px 0;
+  animation: fadeInDown 1s ease 0.3s both;
+}
+
+.stat-box {
+  text-align: center;
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  background: rgba(26,58,106,0.3);
+  border-radius: 4px;
+}
+.stat-num { font-family: var(--tech); font-size: 20px; color: var(--gold); font-weight: 700; }
+.stat-label { font-size: 9px; color: var(--dim); margin-top: 4px; letter-spacing: 1px; }
+
+/* BOTOES */
+.btn {
+  font-family: var(--pixel);
+  font-size: 10px;
+  padding: 14px 28px;
+  border: 2px solid;
+  background: transparent;
+  cursor: pointer;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+.btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.btn:hover::before { opacity: 0.1; }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  color: var(--gold);
+  border-color: var(--gold);
+  text-shadow: 0 0 10px var(--gold);
+  box-shadow: 0 0 20px rgba(245,197,24,0.3), inset 0 0 20px rgba(245,197,24,0.05);
+}
+.btn-primary:hover {
+  box-shadow: 0 0 30px rgba(245,197,24,0.6), inset 0 0 30px rgba(245,197,24,0.1);
+}
+
+.btn-secondary {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  font-size: 9px;
+  padding: 10px 20px;
+}
+
+.btn-danger {
+  color: var(--red);
+  border-color: var(--red);
+  font-size: 9px;
+  padding: 10px 20px;
+}
+
+.intro-buttons {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  margin-top: 10px;
+  animation: fadeInDown 1s ease 0.5s both;
+}
+
+.highscore-display {
+  font-family: var(--pixel);
+  font-size: 8px;
+  color: var(--purple);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* SELECT FASE */
+.phase-select {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; margin: 16px 0;
+}
+
+.phase-btn {
+  width: 320px;
+  font-family: var(--pixel);
+  font-size: 8px;
+  padding: 12px 20px;
+  border: 2px solid var(--border);
+  background: rgba(10,22,40,0.8);
+  color: var(--white);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  position: relative;
+  letter-spacing: 1px;
+}
+
+.phase-btn .phase-icon { margin-right: 8px; }
+.phase-btn .phase-pts { 
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--gold); font-size: 7px;
+}
+.phase-btn:hover { border-color: var(--gold); color: var(--gold); background: rgba(245,197,24,0.05); }
+.phase-btn.locked { opacity: 0.4; cursor: not-allowed; }
+.phase-btn.locked:hover { border-color: var(--border); color: var(--white); background: transparent; }
+
+/* =================== TELA DE JOGO =================== */
+#screen-game {
+  justify-content: flex-start;
+  padding: 0;
+}
+
+/* HUD */
+.hud {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px;
+  background: rgba(5,10,20,0.95);
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+  z-index: 200;
+}
+
+.hud-left { display: flex; align-items: center; gap: 16px; }
+.hud-right { display: flex; align-items: center; gap: 16px; }
+
+.hud-label { font-size: 8px; color: var(--dim); font-family: var(--pixel); display: block; margin-bottom: 3px; }
+.hud-val { font-family: var(--tech); font-size: 18px; font-weight: 700; }
+.hud-score .hud-val { color: var(--gold); text-shadow: 0 0 10px rgba(245,197,24,0.5); }
+.hud-phase .hud-val { color: var(--cyan); }
+
+/* VIDAS */
+.lives { display: flex; gap: 6px; align-items: center; }
+.heart {
+  font-size: 16px;
+  transition: all 0.3s;
+  filter: drop-shadow(0 0 4px rgba(255,50,80,0.6));
+}
+.heart.lost { filter: grayscale(1) opacity(0.3); animation: none; }
+
+/* TIMER BAR */
+.timer-wrap {
+  flex: 1; max-width: 220px; margin: 0 16px;
+}
+.timer-bar-bg {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.timer-bar-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width 0.1s linear, background 0.3s;
+  border-radius: 4px;
+  box-shadow: 0 0 8px var(--green);
+}
+.timer-bar-fill.danger { background: var(--red); box-shadow: 0 0 8px var(--red); }
+.timer-text { font-family: var(--pixel); font-size: 7px; color: var(--dim); text-align: center; margin-top: 4px; }
+
+/* FASE TAG */
+.phase-tag {
+  font-family: var(--pixel);
+  font-size: 7px;
+  padding: 4px 10px;
+  border-radius: 2px;
+  background: rgba(0,229,255,0.1);
+  border: 1px solid var(--cyan);
+  color: var(--cyan);
+  letter-spacing: 1px;
+}
+
+/* ARENA DE JOGO */
+.game-arena {
+  flex: 1; width: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 20px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* PERGUNTA */
+.question-card {
+  width: 100%; max-width: 780px;
+  animation: slideInQ 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideInQ {
+  from { opacity: 0; transform: scale(0.92) translateY(20px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.q-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 16px;
+}
+.q-num {
+  font-family: var(--pixel); font-size: 9px;
+  background: var(--gold); color: var(--bg);
+  padding: 5px 12px; border-radius: 2px;
+}
+.q-topic {
+  font-family: var(--pixel); font-size: 7px;
+  color: var(--cyan); letter-spacing: 2px;
+  border: 1px solid rgba(0,229,255,0.3);
+  padding: 4px 10px; border-radius: 2px;
+}
+.q-pts {
+  margin-left: auto;
+  font-family: var(--pixel); font-size: 7px;
+  color: var(--gold);
+}
+
+.q-text {
+  font-family: var(--mono);
+  font-size: clamp(13px, 2vw, 16px);
+  line-height: 1.7;
+  color: var(--white);
+  background: rgba(10,22,40,0.9);
+  border: 2px solid var(--border);
+  padding: 20px 24px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,229,255,0.03);
+}
+
+/* OPÇÕES */
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+
+.option-btn {
+  padding: 14px 18px;
+  border: 2px solid var(--border);
+  background: rgba(10,22,40,0.8);
+  color: var(--white);
+  font-family: var(--mono);
+  font-size: clamp(11px, 1.5vw, 14px);
+  line-height: 1.5;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  transition: all 0.15s;
+  display: flex; align-items: flex-start; gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.option-btn::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 0; background: var(--cyan);
+  opacity: 0.1; transition: width 0.2s;
+}
+.option-btn:hover:not(:disabled)::before { width: 100%; }
+.option-btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+
+.opt-letter {
+  font-family: var(--pixel);
+  font-size: 9px;
+  color: var(--gold);
+  min-width: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.option-btn:hover:not(:disabled) .opt-letter { color: var(--cyan); }
+
+.option-btn.correct {
+  border-color: var(--green) !important;
+  background: rgba(0,255,136,0.12) !important;
+  color: var(--green) !important;
+  animation: correctPulse 0.5s ease;
+}
+.option-btn.correct .opt-letter { color: var(--green) !important; }
+
+.option-btn.wrong {
+  border-color: var(--red) !important;
+  background: rgba(255,51,85,0.12) !important;
+  color: var(--red) !important;
+  animation: wrongShake 0.4s ease;
+}
+.option-btn.wrong .opt-letter { color: var(--red) !important; }
+
+@keyframes correctPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,255,136,0.5); }
+  100% { transform: scale(1); }
+}
+@keyframes wrongShake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+
+/* FEEDBACK */
+.feedback-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  padding: 16px 24px;
+  display: flex; align-items: flex-start; gap: 16px;
+  font-family: var(--mono);
+  font-size: clamp(11px, 1.5vw, 14px);
+  line-height: 1.6;
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  z-index: 300;
+}
+.feedback-bar.show { transform: translateY(0); }
+.feedback-bar.correct-fb { background: rgba(0,30,15,0.97); border-top: 3px solid var(--green); }
+.feedback-bar.wrong-fb { background: rgba(30,5,10,0.97); border-top: 3px solid var(--red); }
+
+.fb-icon { font-size: 24px; flex-shrink: 0; margin-top: 2px; }
+.fb-content { flex: 1; }
+.fb-title { font-family: var(--pixel); font-size: 9px; margin-bottom: 6px; }
+.feedback-bar.correct-fb .fb-title { color: var(--green); }
+.feedback-bar.wrong-fb .fb-title { color: var(--red); }
+.fb-text { color: rgba(232,244,255,0.85); font-size: 13px; line-height: 1.6; }
+.fb-next { font-family: var(--pixel); font-size: 8px; color: var(--gold); cursor: pointer; margin-top: 10px; display: inline-block; border: 1px solid var(--gold); padding: 6px 14px; }
+.fb-next:hover { background: rgba(245,197,24,0.1); }
+
+/* EFEITOS FLUTUANTES */
+.float-effect {
+  position: fixed;
+  font-family: var(--pixel);
+  font-size: 14px;
+  pointer-events: none;
+  animation: floatUp 1.2s ease forwards;
+  z-index: 500;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-80px) scale(1.3); }
+}
+
+/* COMBO */
+.combo-display {
+  position: fixed;
+  top: 70px; right: 20px;
+  font-family: var(--pixel);
+  font-size: 10px;
+  color: var(--purple);
+  text-shadow: 0 0 10px var(--purple);
+  animation: comboPop 0.3s ease;
+  z-index: 400;
+  display: none;
+}
+.combo-display.show { display: block; }
+@keyframes comboPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* SCREEN FLASH */
+.screen-flash {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 1000;
+  opacity: 0; transition: opacity 0.1s;
+}
+.screen-flash.correct-flash { background: rgba(0,255,136,0.15); }
+.screen-flash.wrong-flash { background: rgba(255,51,85,0.15); }
+
+/* =================== TELA ENTRE FASES =================== */
+#screen-phase-end {
+  background: rgba(5,10,20,0.98);
+}
+
+.phase-end-content {
+  text-align: center;
+  animation: fadeInDown 0.5s ease;
+  max-width: 500px;
+  width: 90%;
+}
+
+.phase-end-emoji { font-size: 64px; margin-bottom: 20px; animation: floatSprite 2s ease-in-out infinite; }
+
+.phase-end-title {
+  font-family: var(--pixel);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.phase-end-title.win { color: var(--gold); text-shadow: 0 0 20px var(--gold); }
+.phase-end-title.fail { color: var(--red); text-shadow: 0 0 20px var(--red); }
+
+.phase-end-sub { font-size: 13px; color: var(--dim); margin-bottom: 24px; }
+
+.phase-stats {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  gap: 12px; margin: 20px 0;
+}
+.pstat { background: rgba(26,58,106,0.3); border: 1px solid var(--border); padding: 12px; border-radius: 4px; }
+.pstat-num { font-family: var(--tech); font-size: 22px; font-weight: 700; }
+.pstat-lbl { font-size: 9px; color: var(--dim); margin-top: 4px; }
+.pstat.gold .pstat-num { color: var(--gold); }
+.pstat.green .pstat-num { color: var(--green); }
+.pstat.red .pstat-num { color: var(--red); }
+
+.tip-box {
+  background: rgba(187,68,255,0.08);
+  border: 1px solid rgba(187,68,255,0.3);
+  padding: 14px 18px;
+  border-radius: 4px;
+  text-align: left;
+  margin: 16px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(232,244,255,0.8);
+}
+.tip-label { font-family: var(--pixel); font-size: 8px; color: var(--purple); margin-bottom: 6px; }
+
+/* =================== GAME OVER =================== */
+#screen-gameover {
+  background: rgba(5,10,20,0.98);
+}
+.go-content {
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+}
+.go-title {
+  font-family: var(--pixel);
+  font-size: clamp(16px, 3vw, 28px);
+  color: var(--red);
+  text-shadow: 0 0 30px var(--red);
+  margin-bottom: 10px;
+  animation: glitch 2s infinite;
+}
+@keyframes glitch {
+  0%, 95% { text-shadow: 0 0 30px var(--red); transform: none; }
+  96% { text-shadow: -3px 0 var(--cyan), 3px 0 var(--gold); transform: skewX(-3deg); }
+  97% { text-shadow: 3px 0 var(--cyan), -3px 0 var(--gold); transform: skewX(3deg); }
+  98% { text-shadow: 0 0 30px var(--red); transform: none; }
+}
+
+/* =================== VITÓRIA =================== */
+#screen-victory {
+  background: rgba(5,10,20,0.98);
+}
+.victory-content {
+  text-align: center;
+  max-width: 520px;
+  width: 90%;
+}
+.victory-title {
+  font-family: var(--pixel);
+  font-size: clamp(12px, 2.5vw, 22px);
+  color: var(--gold);
+  text-shadow: 0 0 30px var(--gold);
+  margin-bottom: 10px;
+}
+.victory-stars { font-size: 48px; margin: 16px 0; letter-spacing: 10px; }
+
+.ranking-box {
+  background: rgba(10,22,40,0.9);
+  border: 2px solid var(--gold);
+  padding: 20px;
+  border-radius: 4px;
+  margin: 20px 0;
+}
+.ranking-title { font-family: var(--pixel); font-size: 9px; color: var(--gold); margin-bottom: 14px; }
+.rank-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 13px;
+}
+.rank-row:last-child { border-bottom: none; }
+.rank-row .rank-n { font-family: var(--pixel); font-size: 9px; color: var(--dim); width: 24px; }
+.rank-row .rank-name { flex: 1; }
+.rank-row .rank-score { font-family: var(--tech); color: var(--gold); font-weight: 700; }
+.rank-row.highlight { color: var(--gold); }
+
+/* INPUT NAME */
+.name-input-wrap { margin: 16px 0; }
+.name-input-label { font-family: var(--pixel); font-size: 8px; color: var(--cyan); margin-bottom: 8px; display: block; }
+.name-input {
+  font-family: var(--pixel);
+  font-size: 11px;
+  background: rgba(10,22,40,0.9);
+  border: 2px solid var(--cyan);
+  color: var(--white);
+  padding: 10px 16px;
+  width: 100%; max-width: 280px;
+  text-align: center;
+  letter-spacing: 2px;
+  outline: none;
+}
+.name-input:focus { box-shadow: 0 0 15px rgba(0,229,255,0.3); }
+
+/* PARTICLE CANVAS */
+#particle-canvas {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 50;
+}
+
+/* PROGRESS DOTS */
+.progress-dots {
+  display: flex; gap: 6px;
+  margin: 0 16px;
+}
+.pdot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--dim);
+  transition: background 0.3s, transform 0.3s;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.pdot.done { background: var(--green); box-shadow: 0 0 6px var(--green); }
+.pdot.current { background: var(--gold); transform: scale(1.3); box-shadow: 0 0 8px var(--gold); animation: blink 0.8s step-end infinite; }
+.pdot.wrong-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+/* MODAL PAUSA */
+.modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 800; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s;
+}
+.modal.open { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--panel);
+  border: 2px solid var(--border);
+  padding: 40px;
+  text-align: center;
+  max-width: 340px; width: 90%;
+}
+.modal-title { font-family: var(--pixel); font-size: 14px; color: var(--gold); margin-bottom: 20px; }
+.modal-btns { display: flex; flex-direction: column; gap: 10px; }
+
+/* BOTÃO PAUSE */
+.pause-btn {
+  font-family: var(--pixel);
+  font-size: 8px;
+  background: transparent;
+  border: 1px solid var(--dim);
+  color: var(--dim);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pause-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* DICA STF */
+.stf-ticker {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(5,10,20,0.95);
+  border-top: 1px solid var(--border);
+  padding: 6px 20px;
+  display: flex; align-items: center; gap: 12px;
+  z-index: 100;
+  pointer-events: none;
+}
+.stf-ticker-label {
+  font-family: var(--pixel);
+  font-size: 7px;
+  color: var(--purple);
+  white-space: nowrap;
+}
+.stf-ticker-text {
+  font-size: 11px;
+  color: rgba(232,244,255,0.5);
+  white-space: nowrap;
+  animation: ticker 25s linear infinite;
+}
+@keyframes ticker {
+  from { transform: translateX(100vw); }
+  to { transform: translateX(-200%); }
+}
+
+/* UTIL */
+.mt { margin-top: 12px; }
+.mb { margin-bottom: 12px; }
+.gap { gap: 10px; display: flex; flex-wrap: wrap; justify-content: center; }
+.divider { width: 100%; height: 1px; background: var(--border); margin: 14px 0; }
+
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<canvas id="particle-canvas"></canvas>
+<div class="screen-flash" id="screen-flash"></div>
+
+<!-- ============ TELA INICIAL ============ -->
+<div class="screen" id="screen-intro">
+  <div class="intro-top">
+    <p class="intro-badge">▶ PRESS START ◀</p>
+    <h1 class="intro-logo">CONSTITUIÇÃO QUEST</h1>
+    <p class="intro-sub">★ Art. 5º CF/88 — O Jogo ★</p>
+  </div>
+
+  <div class="sprite-cf">
+    <svg viewBox="0 0 80 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Livro base -->
+      <rect x="8" y="10" width="62" height="88" rx="3" fill="#0a2040" stroke="#1a5080" stroke-width="2"/>
+      <rect x="8" y="10" width="14" height="88" rx="3" fill="#0d3060" stroke="#1a5080" stroke-width="2"/>
+      <!-- Lombada detalhe -->
+      <line x1="22" y1="10" x2="22" y2="98" stroke="#1a5080" stroke-width="1"/>
+      <!-- Brasão pixelado -->
+      <rect x="32" y="22" width="30" height="36" rx="2" fill="#0d2a50" stroke="#f5c518" stroke-width="1.5"/>
+      <!-- Estrelas do brasão -->
+      <circle cx="47" cy="30" r="4" fill="none" stroke="#f5c518" stroke-width="1.5"/>
+      <text x="43" y="34" font-size="7" fill="#f5c518" font-family="serif">★</text>
+      <line x1="34" y1="46" x2="60" y2="46" stroke="#f5c518" stroke-width="1"/>
+      <text x="36" y="54" font-size="5" fill="#f5c518" font-family="sans-serif">ORDEM</text>
+      <text x="33" y="60" font-size="5" fill="#f5c518" font-family="sans-serif">PROGRESSO</text>
+      <!-- Linhas texto -->
+      <line x1="28" y1="68" x2="66" y2="68" stroke="#1a5080" stroke-width="1.5"/>
+      <line x1="28" y1="74" x2="66" y2="74" stroke="#1a5080" stroke-width="1.5"/>
+      <line x1="28" y1="80" x2="55" y2="80" stroke="#1a5080" stroke-width="1.5"/>
+      <!-- Título -->
+      <text x="14" y="96" font-size="4" fill="#f5c518" font-family="monospace">CF · 1988</text>
+      <!-- Brilho -->
+      <ellipse cx="50" cy="30" rx="15" ry="6" fill="rgba(245,197,24,0.05)"/>
+    </svg>
+  </div>
+
+  <div class="intro-stats">
+    <div class="stat-box">
+      <div class="stat-num">30</div>
+      <div class="stat-label">QUESTÕES</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">5</div>
+      <div class="stat-label">FASES</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">★★★</div>
+      <div class="stat-label">RANKING</div>
+    </div>
+  </div>
+
+  <div class="intro-buttons">
+    <button class="btn btn-primary" onclick="showPhaseSelect()">▶ JOGAR</button>
+    <div class="highscore-label" style="font-family:var(--pixel);font-size:7px;color:var(--dim);margin-top:4px;">RECORDE: <span id="hs-display" style="color:var(--gold)">0</span> pts</div>
+  </div>
+
+  <!-- SELECT FASE (oculto inicialmente) -->
+  <div id="phase-select-panel" style="display:none;margin-top:10px;text-align:center;">
+    <p style="font-family:var(--pixel);font-size:8px;color:var(--cyan);margin-bottom:12px;letter-spacing:2px;">SELECIONE A FASE</p>
+    <div class="phase-select" id="phase-list"></div>
+    <button class="btn btn-danger mt" style="margin-top:10px" onclick="hidePhaseSelect()">✕ VOLTAR</button>
+  </div>
+</div>
+
+<!-- ============ TELA DE JOGO ============ -->
+<div class="screen hidden" id="screen-game">
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-left">
+      <div class="hud-score">
+        <span class="hud-label">PONTOS</span>
+        <span class="hud-val" id="hud-score">0</span>
+      </div>
+      <div class="lives" id="lives-display"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;flex:1;max-width:300px;">
+      <div class="progress-dots" id="progress-dots"></div>
+      <div class="timer-wrap" style="margin-top:8px;">
+        <div class="timer-bar-bg"><div class="timer-bar-fill" id="timer-bar"></div></div>
+        <div class="timer-text" id="timer-text">30s</div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="phase-tag" id="phase-tag">FASE 1</div>
+      <button class="pause-btn" onclick="togglePause()">❚❚</button>
+    </div>
+  </div>
+
+  <!-- Arena -->
+  <div class="game-arena">
+    <div class="question-card" id="question-card">
+      <div class="q-header">
+        <span class="q-num" id="q-num">Q1</span>
+        <span class="q-topic" id="q-topic">TEMA</span>
+        <span class="q-pts" id="q-pts">+100 pts</span>
+      </div>
+      <div class="q-text" id="q-text">Carregando...</div>
+      <div class="options-grid" id="options-grid"></div>
+    </div>
+  </div>
+
+  <!-- Combo -->
+  <div class="combo-display" id="combo-display"></div>
+
+  <!-- Feedback bar -->
+  <div class="feedback-bar" id="feedback-bar">
+    <div class="fb-icon" id="fb-icon">✓</div>
+    <div class="fb-content">
+      <div class="fb-title" id="fb-title">CORRETO!</div>
+      <div class="fb-text" id="fb-text"></div>
+      <span class="fb-next" onclick="nextQuestion()">PRÓXIMA ▶</span>
+    </div>
+  </div>
+
+  <!-- Ticker -->
+  <div class="stf-ticker" id="stf-ticker">
+    <span class="stf-ticker-label">⚖ STF:</span>
+    <span class="stf-ticker-text" id="ticker-text"></span>
+  </div>
+</div>
+
+<!-- ============ ENTRE FASES ============ -->
+<div class="screen hidden" id="screen-phase-end">
+  <div class="phase-end-content">
+    <div class="phase-end-emoji" id="pe-emoji">⚖️</div>
+    <div class="phase-end-title" id="pe-title">FASE CONCLUÍDA!</div>
+    <div class="phase-end-sub" id="pe-sub"></div>
+    <div class="phase-stats">
+      <div class="pstat gold">
+        <div class="pstat-num" id="pe-score">0</div>
+        <div class="pstat-lbl">PONTOS</div>
+      </div>
+      <div class="pstat green">
+        <div class="pstat-num" id="pe-correct">0</div>
+        <div class="pstat-lbl">ACERTOS</div>
+      </div>
+      <div class="pstat red">
+        <div class="pstat-num" id="pe-wrong">0</div>
+        <div class="pstat-lbl">ERROS</div>
+      </div>
+    </div>
+    <div class="tip-box">
+      <div class="tip-label">💡 DICA JURÍDICA</div>
+      <div id="pe-tip"></div>
+    </div>
+    <div class="gap mt">
+      <button class="btn btn-primary" id="pe-btn-next" onclick="nextPhase()">PRÓXIMA FASE ▶</button>
+      <button class="btn btn-secondary" onclick="goHome()">🏠 MENU</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ GAME OVER ============ -->
+<div class="screen hidden" id="screen-gameover">
+  <div class="go-content">
+    <div class="go-title">GAME OVER</div>
+    <div style="font-size:48px;margin:16px 0;">💀</div>
+    <div style="font-family:var(--pixel);font-size:9px;color:var(--dim);margin-bottom:16px;">VOCÊ FICOU SEM VIDAS</div>
+    <div style="font-family:var(--tech);font-size:32px;color:var(--gold);font-weight:700;margin-bottom:4px;" id="go-score">0</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:24px;">PONTUAÇÃO FINAL</div>
+    <div class="tip-box mb">
+      <div class="tip-label">📚 REVISE ESTE TEMA</div>
+      <div id="go-tip"></div>
+    </div>
+    <div class="gap">
+      <button class="btn btn-primary" onclick="restartGame()">↺ TENTAR NOVAMENTE</button>
+      <button class="btn btn-secondary" onclick="goHome()">🏠 MENU</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VITÓRIA ============ -->
+<div class="screen hidden" id="screen-victory">
+  <div class="victory-content">
+    <div class="victory-title">PARABÉNS, DOUTOR(A)!</div>
+    <div class="victory-stars" id="victory-stars">⭐⭐⭐</div>
+    <div style="font-family:var(--tech);font-size:38px;color:var(--gold);font-weight:900;" id="v-score">0</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;">PONTUAÇÃO FINAL</div>
+
+    <div class="name-input-wrap">
+      <label class="name-input-label">INSIRA SEU NOME PARA O RANKING:</label>
+      <input class="name-input" id="name-input" type="text" maxlength="10" placeholder="SEU NOME" />
+    </div>
+    <button class="btn btn-primary mb" onclick="saveScore()">SALVAR PONTUAÇÃO</button>
+
+    <div class="ranking-box" id="ranking-box">
+      <div class="ranking-title">🏆 HALL DA FAMA — TOP 5</div>
+      <div id="ranking-list"></div>
+    </div>
+
+    <div class="gap mt">
+      <button class="btn btn-primary" onclick="restartGame()">↺ JOGAR NOVAMENTE</button>
+      <button class="btn btn-secondary" onclick="goHome()">🏠 MENU</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAUSA -->
+<div class="modal" id="modal-pause">
+  <div class="modal-box">
+    <div class="modal-title">❚❚ PAUSADO</div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" onclick="togglePause()">▶ CONTINUAR</button>
+      <button class="btn btn-secondary" onclick="goHome()">🏠 MENU PRINCIPAL</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+//  BANCO DE QUESTÕES
+// =============================================
+const PHASES = [
+  {
+    id: 1, name: "TEORIA GERAL", icon: "📖", color: "#00e5ff",
+    tip: "Lembre: direitos de 1ª dimensão são NEGATIVOS (liberdades). De 2ª são POSITIVOS (prestações). De 3ª são DIFUSOS (fraternidade). A evolução é CUMULATIVA — use 'dimensões', não 'gerações'!",
+    questions: [
+      {
+        text: "Acerca das dimensões dos direitos fundamentais, qual alternativa está CORRETA?",
+        topic: "DIMENSÕES", pts: 100,
+        opts: [
+          "Os direitos de 1ª dimensão são prestacionais, pois exigem ação positiva do Estado para garantir liberdades.",
+          "Os direitos de 2ª dimensão, de caráter social, impõem ao Estado obrigações de fazer, exigindo políticas públicas para sua concretização.",
+          "A evolução das dimensões implica a superação da anterior pela posterior, tornando obsoletos os direitos de 1ª dimensão.",
+          "Os direitos de 3ª dimensão são direitos individuais surgidos com o liberalismo clássico do século XVIII."
+        ],
+        correct: 1,
+        explain: "✅ Os direitos de 2ª dimensão (saúde, educação, moradia) exigem prestações POSITIVAS do Estado. A 1ª dimensão protege LIBERDADES (abstenção estatal). As dimensões são CUMULATIVAS — nunca se superam. A 3ª dimensão é de direitos DIFUSOS/TRANSINDIVIDUAIS, como o meio ambiente."
+      },
+      {
+        text: "O princípio da aplicabilidade imediata dos direitos fundamentais (art. 5º, §1º, CF) significa que:",
+        topic: "APLICABILIDADE", pts: 100,
+        opts: [
+          "Todos os direitos fundamentais são autoexecutáveis e dispensam qualquer regulamentação infraconstitucional.",
+          "Os direitos fundamentais produzem efeitos desde a promulgação da CF, embora alguns dependam de implementação estatal para plena eficácia.",
+          "Apenas os direitos de 1ª dimensão possuem aplicabilidade imediata, sendo os sociais sujeitos à reserva do possível.",
+          "A aplicabilidade imediata impede qualquer restrição legal aos direitos fundamentais."
+        ],
+        correct: 1,
+        explain: "✅ A aplicabilidade imediata (art. 5º, §1º) não torna todos os direitos autoexecutáveis. Direitos prestacionais (2ª dimensão) dependem de políticas públicas, recursos e implementação estatal. A norma afasta a necessidade de lei para que os DF produzam algum efeito — mas não elimina a necessidade de implementação progressiva dos sociais."
+      },
+      {
+        text: "A chamada 'eficácia horizontal' dos direitos fundamentais refere-se a:",
+        topic: "EFICÁCIA HORIZ.", pts: 150,
+        opts: [
+          "A aplicação dos direitos fundamentais nas relações entre o Estado e os cidadãos.",
+          "A eficácia que os direitos fundamentais possuem apenas durante o período de vigência da Constituição.",
+          "A aplicação dos direitos fundamentais nas relações entre particulares, vinculando também os entes privados.",
+          "A limitação horizontal do poder de reforma constitucional pelo constituinte derivado."
+        ],
+        correct: 2,
+        explain: "✅ A eficácia horizontal (Drittwirkung, alemão) é a irradiação dos direitos fundamentais para as relações privadas — entre particulares. O STF adota a teoria da eficácia horizontal DIRETA (RE 201.819): um clube privado não pode excluir sócio sem contraditório e ampla defesa. A eficácia VERTICAL é a clássica — indivíduo vs. Estado."
+      },
+      {
+        text: "Sobre a característica da inalienabilidade dos direitos fundamentais, assinale a alternativa CORRETA:",
+        topic: "CARACTERÍSTICAS", pts: 100,
+        opts: [
+          "Os direitos fundamentais podem ser transferidos entre particulares mediante contrato, pois são patrimônio do titular.",
+          "A inalienabilidade impede que o titular renuncie temporariamente ao exercício de um direito fundamental.",
+          "Os direitos fundamentais não podem ser transferidos ou negociados, pois são inerentes à dignidade da pessoa humana.",
+          "A inalienabilidade se aplica apenas aos direitos de 1ª dimensão, sendo os sociais disponíveis pelo legislador."
+        ],
+        correct: 2,
+        explain: "✅ A inalienabilidade significa que os direitos fundamentais não são bens jurídicos transmissíveis — não podem ser vendidos, doados ou transferidos. São inerentes à personalidade humana. Isso não impede, porém, renúncia TEMPORÁRIA e PARCIAL ao exercício (ex.: participar de reality show e aceitar filmagem = renúncia parcial à privacidade)."
+      },
+      {
+        text: "A teoria das gerações dos direitos fundamentais foi sistematizada por Karel Vasak e tem como referência a tríade da Revolução Francesa. Qual das alternativas relaciona corretamente os valores?",
+        topic: "HISTÓRIA", pts: 150,
+        opts: [
+          "1ª Geração = Fraternidade | 2ª Geração = Liberdade | 3ª Geração = Igualdade",
+          "1ª Geração = Igualdade | 2ª Geração = Fraternidade | 3ª Geração = Liberdade",
+          "1ª Geração = Liberdade | 2ª Geração = Igualdade | 3ª Geração = Fraternidade",
+          "1ª Geração = Liberdade | 2ª Geração = Fraternidade | 3ª Geração = Igualdade"
+        ],
+        correct: 2,
+        explain: "✅ A tríade da Revolução Francesa (Liberté, Égalité, Fraternité) corresponde exatamente: 1ª dimensão = LIBERDADE (direitos civis e políticos, séc. XVIII); 2ª dimensão = IGUALDADE (direitos sociais, séc. XIX-XX); 3ª dimensão = FRATERNIDADE (direitos difusos/coletivos, pós 2ª Guerra). É a chave mnemônica clássica!"
+      },
+      {
+        text: "Sobre as cláusulas pétreas (art. 60, §4º, CF), é CORRETO afirmar:",
+        topic: "CLÁUSULAS PÉTREAS", pts: 200,
+        opts: [
+          "Qualquer Emenda Constitucional pode alterar direitos fundamentais, desde que aprovada por 3/5 dos membros do Congresso.",
+          "O constituinte derivado não pode abolir os direitos e garantias individuais, mas pode reduzi-los moderadamente.",
+          "Os direitos e garantias individuais são cláusulas pétreas, imunes à abolição por Emenda Constitucional, mas passíveis de restrição razoável.",
+          "Somente os direitos elencados no art. 5º da CF são cláusulas pétreas, excluídos os direitos sociais."
+        ],
+        correct: 2,
+        explain: "✅ O art. 60, §4º veda emendas que TENDAM A ABOLIR direitos e garantias individuais — não impede qualquer restrição, mas proíbe o esvaziamento/abolição. O STF distingue 'restrição' (admitida) de 'abolição' (vedada). Além disso, direitos fundamentais de qualquer dimensão podem ser considerados cláusulas pétreas implícitas, não apenas os do art. 5º."
+      }
+    ]
+  },
+  {
+    id: 2, name: "VIDA, IGUALDADE E LEGALIDADE", icon: "⚖️", color: "#f5c518",
+    tip: "Pena de morte = vedada, salvo GUERRA DECLARADA (cláusula pétrea!). Igualdade formal = perante a lei. Igualdade material = na lei (trata desiguais desigualmente). Legalidade: particular faz o que lei não proíbe; Estado só faz o que lei autoriza!",
+    questions: [
+      {
+        text: "Carlos, ao completar 18 anos, deseja realizar tatuagem em todo o corpo. Seus pais alegam que isso viola seu direito à vida. Com base na CF/88, analise a situação:",
+        topic: "DIREITO À VIDA", pts: 100,
+        opts: [
+          "Os pais têm razão, pois o direito à vida inclui a proteção da integridade física, vedando modificações corporais.",
+          "Carlos pode realizar a tatuagem, pois o direito à vida também abrange a autonomia sobre o próprio corpo, e a decisão é de menor impacto.",
+          "O Estado deve intervir para impedir a tatuagem, pois viola o dever de proteção da integridade física.",
+          "A tatuagem é proibida constitucionalmente por violar a intangibilidade física prevista no art. 5º, III."
+        ],
+        correct: 1,
+        explain: "✅ O direito à vida abrange também a AUTONOMIA sobre o próprio corpo (dimensão positiva da liberdade). Adultos capazes podem tomar decisões sobre seu corpo, incluindo tatuagens. A CF não proíbe modificações corporais voluntárias. O Estado não tem poder de tutelar adultos capazes contra suas próprias escolhas de vida que não prejudicam terceiros."
+      },
+      {
+        text: "O Município Y criou lei determinando que apenas candidatos nascidos no município poderiam participar de concurso público para cargos municipais. Sobre essa lei, à luz do princípio da igualdade:",
+        topic: "IGUALDADE", pts: 150,
+        opts: [
+          "A lei é constitucional, pois o Município tem autonomia para estabelecer requisitos para seus servidores.",
+          "A lei é constitucional, pois representa uma ação afirmativa em favor dos munícipes.",
+          "A lei é inconstitucional, pois cria distinção arbitrária baseada em naturalidade, sem correlação lógica com o cargo, violando o princípio da igualdade.",
+          "A lei é válida se o cargo exigir conhecimento específico da cultura local."
+        ],
+        correct: 2,
+        explain: "✅ O princípio da igualdade (art. 5º, caput) e o art. 37, I (acessibilidade aos cargos públicos) vedam discriminações arbitrárias. A naturalidade não tem CORRELAÇÃO LÓGICA com a capacidade para exercer cargos públicos. Celso Antônio Bandeira de Mello ensina que a discriminação só é válida se o fator de discrímen justificar racionalmente a distinção. Aqui não há tal justificativa."
+      },
+      {
+        text: "Empresa privada foi contratada para prestar serviços a um Estado federativo. O contrato previa multa apenas para a empresa, nunca para o Estado. Essa cláusula:",
+        topic: "IGUALDADE CONTRATUAL", pts: 150,
+        opts: [
+          "É válida, pois a Administração Pública tem prerrogativas que justificam cláusulas diferenciadas em contratos administrativos.",
+          "É inválida, pois viola o princípio da igualdade das partes contratantes previsto no art. 5º, caput, da CF.",
+          "É válida, mas apenas se expressamente autorizada por lei e proporcional ao interesse público protegido.",
+          "É inválida apenas se a empresa for de pequeno porte, protegida pela LC 123/2006."
+        ],
+        correct: 0,
+        explain: "✅ Esta é uma pegadinha! Contratos administrativos são regidos pelo princípio da SUPREMACIA DO INTERESSE PÚBLICO — a Administração possui prerrogativas (cláusulas exorbitantes) que seriam ilegais no direito privado, mas são legítimas no público. A assimetria em favor do Estado em contratos administrativos é constitucionalmente tolerada. A igualdade formal aplica-se entre particulares em paridade."
+      },
+      {
+        text: "Um decreto do Governador proibiu a venda de bebidas alcoólicas após as 22h em todo o Estado, sem qualquer lei que o respaldasse. Com base no princípio da legalidade:",
+        topic: "LEGALIDADE", pts: 100,
+        opts: [
+          "O decreto é válido, pois o Poder Executivo tem competência regulatória sobre saúde pública e pode agir por decreto.",
+          "O decreto é válido enquanto não sobrevier lei em sentido contrário.",
+          "O decreto é inválido, pois a imposição de restrições a direitos dos particulares exige lei em sentido formal — o decreto, ato normativo infralegal, não tem essa força.",
+          "O decreto é válido se aprovado pela Assembleia Legislativa em 24h."
+        ],
+        correct: 2,
+        explain: "✅ Art. 5º, II: 'ninguém será obrigado a fazer ou deixar de fazer alguma coisa senão em virtude de LEI'. Decreto é ato INFRALEGAL — não cria obrigações para particulares. Para restringir a liberdade de comércio dos particulares (venda de bebidas), é necessária lei formal (ordinária ou complementar). O Executivo pode regulamentar o que a lei já prevê, mas não pode criar restrições novas por decreto."
+      },
+      {
+        text: "Sobre a pena de morte no ordenamento constitucional brasileiro, é CORRETO afirmar:",
+        topic: "DIREITO À VIDA", pts: 200,
+        opts: [
+          "A pena de morte é absolutamente vedada pela CF/88, sem qualquer exceção, sendo cláusula pétrea.",
+          "A pena de morte é vedada, salvo em caso de guerra declarada, sendo essa exceção uma cláusula pétrea que nem emenda pode alterar.",
+          "A pena de morte é vedada, mas pode ser instituída por Emenda Constitucional aprovada em 2 turnos em cada Casa.",
+          "A pena de morte é permitida para crimes hediondos mediante aprovação do Congresso Nacional."
+        ],
+        correct: 1,
+        explain: "✅ Art. 5º, XLVII: 'não haverá penas: a) de morte, salvo em caso de GUERRA DECLARADA'. A pena de morte é vedada com UMA exceção: guerra declarada (não apenas guerra, mas guerra declarada formalmente). Essa norma é CLÁUSULA PÉTREA (art. 60, §4º, IV). Portanto, nem emenda pode instituir pena de morte para crimes comuns — mas pode-se DISCUTIR se pode ampliar a exceção de guerra. A posição dominante é que NÃO, pois afeta o núcleo essencial."
+      },
+      {
+        text: "A Universidade Federal Z implantou sistema de cotas reservando 30% das vagas para autodeclarados negros. Um candidato não beneficiado impugnou o sistema. O STF, na ADPF 186, decidiu que:",
+        topic: "AÇÕES AFIRMATIVAS", pts: 200,
+        opts: [
+          "As cotas raciais são inconstitucionais por violarem a igualdade formal prevista no art. 5º, caput, CF.",
+          "As cotas raciais são constitucionais por realizarem a igualdade material, com base nos objetivos constitucionais de erradicação da desigualdade e promoção do bem de todos.",
+          "As cotas raciais são constitucionais apenas se baseadas em critérios exclusivamente socioeconômicos.",
+          "As cotas raciais são inconstitucionais, mas toleradas até que lei federal as regulamente uniformemente."
+        ],
+        correct: 1,
+        explain: "✅ O STF, na ADPF 186 (rel. Min. Ricardo Lewandowski, 2012), por unanimidade, declarou CONSTITUCIONAIS as cotas raciais em universidades. Fundamentação: a igualdade MATERIAL (art. 3º, III e IV; art. 5º, caput) autoriza tratamento diferenciado para promover igualdade real de oportunidades, corrigindo desigualdades históricas. Ações afirmativas são constitucionais mesmo sem lei — a CF as fundamenta diretamente."
+      }
+    ]
+  },
+  {
+    id: 3, name: "LIBERDADES FUNDAMENTAIS", icon: "🕊️", color: "#00ff88",
+    tip: "Reunião = AVISO (não autorização!). Expressão = sem censura prévia, mas com responsabilidade posterior. Discurso de ódio NÃO é protegido (caso Ellwanger). Escusa de consciência = precisa aceitar a prestação alternativa, senão perde direitos!",
+    questions: [
+      {
+        text: "Um grupo de estudantes planejou uma manifestação em praça pública para o dia seguinte, sem comunicar previamente à prefeitura. A autoridade municipal tentou impedir o ato. Com base na CF/88:",
+        topic: "DIREITO DE REUNIÃO", pts: 100,
+        opts: [
+          "A autoridade agiu corretamente, pois a CF exige autorização prévia para reuniões em locais públicos.",
+          "A autoridade agiu incorretamente. A CF exige apenas prévio AVISO, não autorização. A ausência de aviso pode gerar responsabilidade dos organizadores, mas não justifica impedir a reunião pacífica.",
+          "A reunião é ilegal, pois o aviso prévio é condição de validade do exercício do direito de reunião.",
+          "A autoridade pode exigir autorização prévia se a reunião tratar de temas políticos."
+        ],
+        correct: 1,
+        explain: "✅ Art. 5º, XVI: reunião pacífica, sem armas, em locais públicos, 'independentemente de AUTORIZAÇÃO, sendo apenas exigido PRÉVIO AVISO à autoridade competente'. O aviso é para que a autoridade possa garantir a segurança e coordenar o trânsito — não para que autorize. A falta de aviso pode gerar responsabilidade dos organizadores, mas não é motivo para dispersar uma reunião pacífica."
+      },
+      {
+        text: "Revista jornalística publicou matéria com fotos privadas de um político, obtidas de seu celular pessoal hackeado, revelando detalhes de sua vida íntima irrelevantes ao exercício do mandato. O político pleiteia indenização. Nesse caso:",
+        topic: "PRIVACIDADE vs. EXPRESSÃO", pts: 150,
+        opts: [
+          "A publicação é amparada pela liberdade de imprensa, pois figuras públicas têm privacidade reduzida em todos os aspectos de sua vida.",
+          "A publicação viola a inviolabilidade da intimidade (art. 5º, X), pois os fatos são da esfera íntima e sem relevância pública, sendo devida indenização.",
+          "A publicação é válida, pois a CF veda a censura prévia, não a responsabilização posterior.",
+          "O político não tem direito à privacidade enquanto no exercício do mandato."
+        ],
+        correct: 1,
+        explain: "✅ Figuras públicas têm esfera de privacidade REDUZIDA apenas quanto às suas funções públicas — não na vida íntima. A teoria das esferas distingue: íntima (segredo absoluto), privada (compartilhada com poucos) e pública. Fotos íntimas pessoais, sem relevância para o mandato, pertencem à esfera íntima. A publicação viola o art. 5º, X (intimidade e honra), gerando indenização. A liberdade de expressão não protege a devassa da vida íntima."
+      },
+      {
+        text: "Pedro, Testemunha de Jeová, se recusou ao serviço militar por razões religiosas e aceitou realizar o serviço civil alternativo. Contudo, a repartição onde deveria servir o rejeitou por não ter vagas. Nesse caso:",
+        topic: "ESCUSA DE CONSCIÊNCIA", pts: 150,
+        opts: [
+          "Pedro ficará privado de direitos por não ter cumprido a prestação alternativa.",
+          "Pedro não sofrerá sanção, pois a recusa da repartição ao serviço alternativo é caso fortuito que não pode prejudicá-lo.",
+          "Pedro deverá cumprir o serviço militar obrigatório, pois não há outra opção legal.",
+          "Pedro perderá os direitos políticos temporariamente até que o Estado disponibilize nova vaga."
+        ],
+        correct: 1,
+        explain: "✅ A escusa de consciência (art. 5º, VIII) exige que o objetor ACEITE e esteja DISPONÍVEL para a prestação alternativa. Se o Estado não disponibiliza vaga, o ônus é do Estado — Pedro não pode ser penalizado por culpa estatal. A sanção (privação de direitos) só se aplica quando o objetor RECUSA a prestação alternativa, não quando o Estado falha em oferecê-la."
+      },
+      {
+        text: "Editora publicou livro com conteúdo antissemita, negando o Holocausto e pregando ódio contra judeus. O autor alegou liberdade de expressão. O STF, no caso Ellwanger (HC 82.424), decidiu que:",
+        topic: "DISCURSO DE ÓDIO", pts: 200,
+        opts: [
+          "A publicação está protegida pela liberdade de expressão, que é direito fundamental sem restrições.",
+          "A publicação é crime de racismo (art. 5º, XLII), imprescritível e inafiançável, não estando protegida pela liberdade de expressão.",
+          "A publicação é crime, mas prescritível, pois a imprescritibilidade aplica-se apenas ao racismo contra negros.",
+          "A publicação configura apenas crime de injúria racial, sujeito à prescrição normal."
+        ],
+        correct: 1,
+        explain: "✅ No HC 82.424 (caso Ellwanger, 2003), o STF decidiu, por 8x3, que a publicação de livros antissemitas configura RACISMO (art. 5º, XLII), crime imprescritível e inafiançável. A liberdade de expressão NÃO protege o discurso de ódio. O STF aplicou a técnica da PONDERAÇÃO: a dignidade humana e a igualdade superaram a liberdade de expressão naquele caso. Judeus são considerados 'raça' para fins de proteção constitucional."
+      },
+      {
+        text: "Uma lei ordinária proibiu qualquer manifestação artística que 'ofenda os bons costumes', exigindo análise prévia do conteúdo por comitê governamental antes da publicação. Essa lei é:",
+        topic: "LIBERDADE DE EXPRESSÃO", pts: 150,
+        opts: [
+          "Constitucional, pois o Estado tem dever de proteger os bons costumes e a moral pública.",
+          "Constitucional se o comitê for composto por membros da sociedade civil, sem interferência governamental direta.",
+          "Inconstitucional, pois o art. 5º, IX veda a censura prévia a obras artísticas, sendo as eventuais restrições apenas a posteriori.",
+          "Constitucional apenas para obras destinadas ao público infantil."
+        ],
+        correct: 2,
+        explain: "✅ Art. 5º, IX: 'é livre a expressão da atividade intelectual, artística, científica e de comunicação, INDEPENDENTEMENTE DE CENSURA OU LICENÇA'. A CF veda explicitamente a CENSURA PRÉVIA — o Estado não pode analisar e barrar obras antes da publicação. O STF na ADPF 130 reafirmou isso ao declarar não recepcionada a Lei de Imprensa. Eventuais abusos são sancionados APÓS a publicação (responsabilidade civil/penal)."
+      },
+      {
+        text: "Sobre a liberdade religiosa e o Estado laico brasileiro, é CORRETO afirmar:",
+        topic: "LIBERDADE RELIGIOSA", pts: 100,
+        opts: [
+          "O Brasil é Estado laico, portanto é vedado qualquer símbolo religioso em espaços públicos.",
+          "O ensino religioso em escolas públicas é obrigatório para todos os alunos, por decisão do STF na ADI 4.439.",
+          "O Brasil é Estado laico, mas o ensino religioso nas escolas públicas é de matrícula facultativa, podendo ser de natureza confessional segundo o STF.",
+          "Igrejas e templos religiosos são imunes apenas ao IPTU, mas não aos demais impostos."
+        ],
+        correct: 2,
+        explain: "✅ O Brasil é Estado laico (sem religião oficial), mas isso não significa Estado ateu ou hostil à religião. O art. 210, §1º autoriza ensino religioso de MATRÍCULA FACULTATIVA nas escolas públicas. Na ADI 4.439 (2017), o STF decidiu que o ensino pode ser CONFESSIONAL (específico de uma religião), desde que facultativo. Quanto à imunidade tributária: art. 150, VI, 'b' — são imunes ao IPTU, IRPJ e outros impostos sobre patrimônio, renda e serviços."
+      }
+    ]
+  },
+  {
+    id: 4, name: "INVIOLABILIDADES", icon: "🔒", color: "#bb44ff",
+    tip: "Domicílio: flagrante/socorro/desastre = dia OU noite sem mandado. Judicial = só DURANTE O DIA (6h-18h). Interceptação: só telefônica tem exceção constitucional, somente por ordem judicial + Lei 9.296/96 + fins criminais!",
+    questions: [
+      {
+        text: "Às 23h, policiais receberam ordem judicial de busca e apreensão em uma residência. Ao chegarem, o morador permitiu a entrada voluntariamente. A busca é:",
+        topic: "INVIOLAB. DOMICÍLIO", pts: 150,
+        opts: [
+          "Ilícita, pois mandados judiciais só podem ser cumpridos durante o dia (6h–18h), sendo nulas as provas obtidas.",
+          "Lícita, pois o consentimento do morador supre a exigência de cumprimento diurno do mandado judicial.",
+          "Ilícita, pois o juiz não pode expedir mandado para cumprimento noturno.",
+          "Lícita apenas se acompanhada de oficial de justiça e duas testemunhas."
+        ],
+        correct: 1,
+        explain: "✅ A restrição do art. 5º, XI (somente durante o dia para mandado judicial) visa proteger o morador de invasões estatais noturnas. Se o PRÓPRIO MORADOR consente com a entrada, a proteção constitucional é dispensada voluntariamente — não há invasão. O consentimento livre e informado do morador torna lícita a entrada a qualquer hora. O STF reconhece essa distinção entre invasão e entrada consentida."
+      },
+      {
+        text: "Investigador, sem mandado judicial, instalou dispositivo de escuta em escritório de advocacia às 10h da manhã, após suspeitar de crimes. As provas obtidas são:",
+        topic: "INVIOLAB. COMUNICAÇÕES", pts: 200,
+        opts: [
+          "Lícitas, pois foram colhidas durante o dia em local profissional, não residencial.",
+          "Ilícitas, pois o escritório de advocacia é equiparado a 'casa' pelo STF, sendo inviolável, e a escuta sem mandado viola o art. 5º, XI e XII.",
+          "Lícitas, pois a suspeita de crime justifica a medida investigatória.",
+          "Lícitas apenas se o investigador era policial civil com atribuição criminal."
+        ],
+        correct: 1,
+        explain: "✅ O STF adota conceito AMPLO de 'casa': inclui escritórios profissionais, quartos de hotel e qualquer espaço de habitação ou trabalho privado. Escritório de advocacia é protegido pela inviolabilidade do domicílio (art. 5º, XI). Além disso, a escuta ambiental (captação do ambiente) sem mandado viola também a inviolabilidade das comunicações (art. 5º, XII). Provas ilícitas são inadmissíveis (art. 5º, LVI)."
+      },
+      {
+        text: "A autoridade policial interceptou as comunicações por WhatsApp de um suspeito, com base apenas em ordem do delegado, sem autorização judicial. Sobre essa interceptação:",
+        topic: "COMUNICAÇÕES DIGITAIS", pts: 200,
+        opts: [
+          "É lícita, pois o delegado tem poder investigatório para decretar a medida em casos de urgência.",
+          "É ilícita, pois a interceptação de comunicações telefônicas e telemáticas exige ordem judicial (art. 5º, XII, CF e Lei 9.296/96), sendo o delegado incompetente para autorizá-la.",
+          "É lícita se o crime investigado for hediondo, dispensando-se o controle judicial.",
+          "É lícita por 48h, após as quais o delegado deve submeter ao juiz para ratificação."
+        ],
+        correct: 1,
+        explain: "✅ Art. 5º, XII: a interceptação telefônica e telemática (WhatsApp incluso) exige ORDEM JUDICIAL — sem exceção. A Lei 9.296/96 regulamenta: apenas o JUIZ pode autorizá-la, para fins de INVESTIGAÇÃO CRIMINAL ou instrução processual penal, e somente quando não houver outro meio disponível. O delegado não tem essa competência. Provas obtidas sem mandado judicial são ilícitas e imprestáveis."
+      },
+      {
+        text: "Policiais arrombaram a porta de uma residência às 2h da manhã após receberem ligação anônima de que estava ocorrendo violência doméstica no local (gritos de mulher). Essa entrada é:",
+        topic: "INVIOLAB. DOMICÍLIO", pts: 150,
+        opts: [
+          "Ilícita, pois é noturna e sem mandado judicial.",
+          "Lícita, pois configura hipótese de 'prestar socorro', que permite entrada noturna sem mandado, prevista no art. 5º, XI, CF.",
+          "Ilícita, pois ligação anônima não é fundamento suficiente para qualquer ato policial.",
+          "Lícita apenas se os policiais obtiverem autorização por telefone do plantonista judicial."
+        ],
+        correct: 1,
+        explain: "✅ O art. 5º, XI prevê três situações que permitem entrada SEM mandado, DIA OU NOITE: flagrante delito, DESASTRE ou para PRESTAR SOCORRO. A violência doméstica em curso (gritos de vítima) configura situação de socorro imediato, permitindo a entrada. A ligação anônima, aqui, fundamenta a situação de socorro — não é mero indício de crime futuro, mas indicativo de perigo imediato à integridade de pessoa no local."
+      },
+      {
+        text: "Em investigação autorizada judicialmente para apurar corrupção, os policiais interceptaram ligações e, fortuitamente, descobriram provas de tráfico de drogas não investigado. Pela teoria da serendipidade, essas provas são:",
+        topic: "SERENDIPIDADE", pts: 250,
+        opts: [
+          "Inadmissíveis, pois a autorização judicial era específica para o crime de corrupção.",
+          "Admissíveis, pois foram obtidas no curso de interceptação licitamente autorizada, e o STF reconhece o 'encontro fortuito de provas' como válido.",
+          "Admissíveis apenas se o juiz que autorizou a interceptação original ratificar o uso para o novo crime.",
+          "Inadmissíveis, pois o princípio da especialidade veda o uso de provas de interceptação para crimes distintos."
+        ],
+        correct: 1,
+        explain: "✅ A teoria da SERENDIPIDADE (ou encontro fortuito de provas) é adotada pelo STF e STJ: provas obtidas casualmente durante investigação licitamente autorizada são válidas, desde que o crime 'descoberto' seja punível com RECLUSÃO (não apenas detenção). Tráfico é punível com reclusão. A interceptação já estava autorizada — não houve ilicitude. O STJ, nos Informativos 480 e 528, consolidou esse entendimento."
+      },
+      {
+        text: "Sobre a inviolabilidade da correspondência (cartas físicas), o texto constitucional prevê:",
+        topic: "INVIOLAB. CORRESPONDÊNCIA", pts: 150,
+        opts: [
+          "A correspondência pode ser violada por ordem judicial, assim como a interceptação telefônica.",
+          "A inviolabilidade da correspondência é absoluta, sem qualquer exceção constitucional expressa.",
+          "A correspondência pode ser violada pela autoridade policial em caso de crime inafiançável.",
+          "A inviolabilidade da correspondência cede diante do interesse público, a critério da administração penitenciária."
+        ],
+        correct: 1,
+        explain: "✅ Esta é uma questão POLÊMICA e muito cobrada. O art. 5º, XII só prevê exceção expressa para COMUNICAÇÕES TELEFÔNICAS (por ordem judicial). Para correspondência, telegramas e dados, não há exceção expressa no texto constitucional. Para parte da doutrina, a inviolabilidade da correspondência é ABSOLUTA. O STF tem admitido, excepcionalmente, a abertura de correspondência de presos (relativização), mas sem base expressa no art. 5º, XII."
+      }
+    ]
+  },
+  {
+    id: 5, name: "GARANTIAS PROCESSUAIS", icon: "🏛️", color: "#ff6644",
+    tip: "Habeas Corpus protege a LIBERDADE AMBULATÓRIA — pode ser repressivo (já preso) ou preventivo (ameaça de prisão). Inafastabilidade: arbitragem voluntária É constitucional! Exigência de esgotamento administrativo GERAL é inconstitucional — salvo Justiça Desportiva e o caso especial do INSS (RE 631.240).",
+    questions: [
+      {
+        text: "Pedro foi preso em flagrante e seu advogado impetrou habeas corpus alegando ilegalidade na prisão. O juiz indeferiu o HC sem examinar o mérito, alegando que deveria ser interposto recurso ordinário. Essa decisão é:",
+        topic: "HABEAS CORPUS", pts: 150,
+        opts: [
+          "Correta, pois o habeas corpus não pode ser impetrado quando houver outro recurso disponível.",
+          "Incorreta, pois o habeas corpus é garantia constitucional autônoma que protege a liberdade de locomoção, podendo ser usado independentemente de outros recursos quando há ilegalidade ou abuso de poder.",
+          "Correta, pois o HC é ação subsidiária que exige o prévio esgotamento de recursos ordinários.",
+          "Incorreta apenas se o preso estiver em estabelecimento federal."
+        ],
+        correct: 1,
+        explain: "✅ O habeas corpus (art. 5º, LXVIII) é ação constitucional AUTÔNOMA, não subsidiária. Pode ser impetrado a qualquer tempo, independentemente de outros recursos, sempre que houver VIOLÊNCIA OU COAÇÃO na liberdade de locomoção por ILEGALIDADE OU ABUSO DE PODER. O STF inclusive admite HC para trancar ação penal manifestamente inepta (Súmula 648). O juiz errou ao exigir esgotamento de recursos ordinários."
+      },
+      {
+        text: "Uma lei criou 'Tribunal Administrativo Obrigatório' e exigiu que todos os conflitos trabalhistas passassem por ele antes de ir ao Judiciário, sob pena de extinção do processo sem julgamento de mérito. Essa lei viola:",
+        topic: "INAFASTABILIDADE", pts: 150,
+        opts: [
+          "Apenas o princípio da celeridade processual, pois cria uma etapa adicional desnecessária.",
+          "O art. 5º, XXXV, CF, pois a lei não pode excluir da apreciação do Poder Judiciário lesão ou ameaça a direito, e a exigência obrigatória prévia cria obstáculo inconstitucional.",
+          "Apenas o princípio da autonomia sindical, por interferir nas negociações trabalhistas.",
+          "Nada, pois o art. 114, CF autoriza o legislador a criar instâncias administrativas obrigatórias para conflitos trabalhistas."
+        ],
+        correct: 1,
+        explain: "✅ Art. 5º, XXXV: 'a lei não excluirá da apreciação do Poder Judiciário lesão ou ameaça a direito'. A exigência de tribunal administrativo OBRIGATÓRIO como condição para acesso ao Judiciário viola a inafastabilidade. A exceção constitucional é apenas para a Justiça Desportiva (art. 217, §1º). Mediação e arbitragem VOLUNTÁRIAS são constitucionais — a compulsoriedade, não."
+      },
+      {
+        text: "Uma irretroatividade protege três institutos. Qual das alternativas descreve corretamente o 'ato jurídico perfeito'?",
+        topic: "IRRETROATIVIDADE", pts: 100,
+        opts: [
+          "Decisão judicial não mais sujeita a recursos, que não pode ser alterada por lei posterior.",
+          "Direito já incorporado ao patrimônio do titular, que pode ser exercido a qualquer tempo.",
+          "Ato já consumado segundo a lei vigente ao tempo em que se realizou, imune a lei nova que o invalide.",
+          "Ato praticado pela Administração Pública que gerou direitos para o particular."
+        ],
+        correct: 2,
+        explain: "✅ Os três institutos do art. 5º, XXXVI: (1) COISA JULGADA = decisão judicial imutável; (2) DIREITO ADQUIRIDO = direito já incorporado ao patrimônio, exercível quando quiser; (3) ATO JURÍDICO PERFEITO = ato já consumado/concluído segundo a lei vigente na época, que não pode ser invalidado por lei nova. Ex.: contrato celebrado sob as regras do CC/1916 — lei nova não pode invalidá-lo retroativamente."
+      },
+      {
+        text: "Julio foi condenado definitivamente a 6 anos por tráfico de drogas. Após o trânsito em julgado, o STF declarou inconstitucional a norma que criminalizava aquela conduta. Com base na CF/88:",
+        topic: "RETROATIVIDADE PENAL", pts: 200,
+        opts: [
+          "Julio deve continuar cumprindo a pena, pois a coisa julgada é intangível mesmo diante de lei mais benéfica.",
+          "Julio deve ser solto, pois a lei penal mais benéfica retroage sempre, inclusive para atingir sentenças transitadas em julgado.",
+          "Julio pode pedir revisão criminal em 5 anos, após os quais a condenação estará extinta.",
+          "A decisão do STF não tem efeitos retroativos para casos já julgados definitivamente."
+        ],
+        correct: 1,
+        explain: "✅ Art. 5º, XL: 'a lei penal não retroagirá, SALVO PARA BENEFICIAR O RÉU'. A lei penal mais benéfica (lex mitior) retroage SEMPRE, inclusive para atingir a COISA JULGADA — é uma exceção expressa à irretroatividade. Se a conduta foi descriminalizada, a punibilidade é extinta (art. 107, III, CP). O Juízo da Execução Penal aplica a lei mais benéfica (Súmula 611/STF). Julio deve ser posto em liberdade imediatamente."
+      },
+      {
+        text: "Trabalhador quer ajuizar reclamação trabalhista contra ex-empregador por horas extras não pagas, mas não fez qualquer requerimento ao empregador antes. Com base na inafastabilidade e na jurisprudência do STF (RE 631.240):",
+        topic: "INAFASTABILIDADE", pts: 250,
+        opts: [
+          "O trabalhador pode ingressar diretamente na Justiça do Trabalho, pois a exigência de prévio requerimento viola a inafastabilidade.",
+          "O trabalhador pode ingressar diretamente na Justiça do Trabalho em disputas trabalhistas — o RE 631.240 se refere apenas a ações previdenciárias do INSS.",
+          "O trabalhador deve primeiro fazer acordo com o empregador por via sindical antes de ir a Juízo.",
+          "O trabalhador só pode ajuizar ação após 6 meses do término do contrato."
+        ],
+        correct: 1,
+        explain: "✅ Cuidado com a pegadinha! O RE 631.240 do STF (que exige prévio requerimento ao INSS antes de ação judicial) aplica-se APENAS às ações PREVIDENCIÁRIAS contra o INSS — não a relações trabalhistas privadas. Para ações trabalhistas comuns (horas extras, salários), o trabalhador pode ir direto à Justiça do Trabalho, sem prévio requerimento. A exigência de prévio esgotamento em relações privadas trabalhistas violaria a inafastabilidade."
+      },
+      {
+        text: "Sobre a intangibilidade física e psíquica (art. 5º, III e XLIX, CF), o STF, na ADPF 347, reconheceu:",
+        topic: "INTANGIB. FÍSICA", pts: 200,
+        opts: [
+          "Que as condições carcerárias precárias são problema exclusivamente do Poder Legislativo, sem poder o Judiciário intervir.",
+          "O 'estado de coisas inconstitucional' do sistema prisional brasileiro, permitindo ao STF determinar políticas públicas para corrigir a violação massiva e estrutural de direitos fundamentais dos presos.",
+          "Que a superlotação carcerária é situação tolerável diante da reserva do possível, sendo inviável a intervenção judicial.",
+          "Que apenas o Poder Executivo pode ser responsabilizado pelas condições prisionais, excluindo-se o Legislativo."
+        ],
+        correct: 1,
+        explain: "✅ Na ADPF 347 (2015), o STF, por maioria, reconheceu o 'ESTADO DE COISAS INCONSTITUCIONAL' (ECI) do sistema carcerário — conceito importado da Corte Constitucional colombiana. O ECI caracteriza-se por: violação massiva e estrutural de direitos fundamentais, múltiplos órgãos responsáveis, e omissão reiterada. O STF interveio determinando medidas concretas ao Poder Executivo (como liberação do Fundo Penitenciário Nacional — FUNPEN)."
+      }
+    ]
+  }
+];
+
+const TICKER_TIPS = [
+  "STF • ADPF 186: Cotas raciais em universidades são constitucionais",
+  "STF • ADPF 130: Lei de Imprensa de 1967 não foi recepcionada pela CF/88",
+  "STF • HC 82.424 (Ellwanger): Antissemitismo é crime de racismo, imprescritível",
+  "STF • RE 603.616: Busca domiciliar só pode ocorrer das 6h às 18h",
+  "STF • ADPF 347: Sistema carcerário em 'estado de coisas inconstitucional'",
+  "STF • ADI 4.439: Ensino religioso confessional em escolas públicas é facultativo",
+  "STF • RE 1.010.606: Direito ao esquecimento é incompatível com a CF/88",
+  "STF • RE 631.240: Prévio requerimento ao INSS é condição para ações previdenciárias",
+  "CF/88 • Art. 5º, XL: Lei penal mais benéfica SEMPRE retroage, inclusive à coisa julgada",
+  "CF/88 • Art. 5º, XVI: Reunião — AVISO à autoridade, não autorização!",
+];
+
+// =============================================
+//  ESTADO DO JOGO
+// =============================================
+let state = {
+  phase: 0,
+  questionIndex: 0,
+  score: 0,
+  lives: 3,
+  combo: 0,
+  maxCombo: 0,
+  correct: 0,
+  wrong: 0,
+  answered: false,
+  paused: false,
+  timer: 30,
+  timerInterval: null,
+  phaseQuestions: [],
+  results: [],
+  highscores: []
+};
+
+// =============================================
+//  PARTÍCULAS
+// =============================================
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+
+let particles = [];
+function spawnParticles(x, y, color, count=20) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.9) * 8,
+      life: 1,
+      size: Math.random() * 5 + 2,
+      color
+    });
+  }
+}
+function animateParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life -= 0.025;
+    ctx.save();
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// =============================================
+//  ESTRELAS DE FUNDO
+// =============================================
+function createStars() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s`;
+    container.appendChild(s);
+  }
+}
+createStars();
+
+// =============================================
+//  HIGHSCORES (localStorage)
+// =============================================
+function loadHighscores() {
+  try { state.highscores = JSON.parse(localStorage.getItem('cq_hs') || '[]'); } catch(e) { state.highscores = []; }
+  const top = state.highscores[0];
+  document.getElementById('hs-display').textContent = top ? top.score : 0;
+}
+function saveHighscore(name, score) {
+  state.highscores.push({ name: name.toUpperCase().slice(0, 10), score });
+  state.highscores.sort((a, b) => b.score - a.score);
+  state.highscores = state.highscores.slice(0, 10);
+  try { localStorage.setItem('cq_hs', JSON.stringify(state.highscores)); } catch(e) {}
+  loadHighscores();
+}
+
+// =============================================
+//  NAVEGAÇÃO DE TELAS
+// =============================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function showPhaseSelect() {
+  const panel = document.getElementById('phase-select-panel');
+  const list = document.getElementById('phase-list');
+  document.querySelector('.intro-buttons').style.display = 'none';
+  panel.style.display = 'block';
+  list.innerHTML = '';
+  PHASES.forEach((ph, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'phase-btn';
+    btn.innerHTML = `<span class="phase-icon">${ph.icon}</span> ${ph.name} <span class="phase-pts">6Q • 1000pts</span>`;
+    btn.style.borderColor = ph.color;
+    btn.onclick = () => startGame(i);
+    list.appendChild(btn);
+  });
+}
+function hidePhaseSelect() {
+  document.getElementById('phase-select-panel').style.display = 'none';
+  document.querySelector('.intro-buttons').style.display = 'flex';
+}
+
+function goHome() {
+  clearInterval(state.timerInterval);
+  state = { ...state, paused: false };
+  document.getElementById('modal-pause').classList.remove('open');
+  document.getElementById('feedback-bar').classList.remove('show');
+  showScreen('screen-intro');
+  loadHighscores();
+}
+
+// =============================================
+//  LÓGICA DO JOGO
+// =============================================
+function startGame(phaseIndex) {
+  state.phase = phaseIndex;
+  state.score = 0;
+  state.lives = 3;
+  state.combo = 0;
+  state.maxCombo = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.questionIndex = 0;
+  state.phaseQuestions = shuffle([...PHASES[phaseIndex].questions]);
+  state.results = [];
+  showScreen('screen-game');
+  updateHUD();
+  loadQuestion();
+  rotateTicker();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function loadQuestion() {
+  if (state.questionIndex >= state.phaseQuestions.length) {
+    endPhase(true); return;
+  }
+
+  state.answered = false;
+  const q = state.phaseQuestions[state.questionIndex];
+  const phase = PHASES[state.phase];
+
+  // Remove feedback bar
+  const fb = document.getElementById('feedback-bar');
+  fb.classList.remove('show');
+
+  // Anima card
+  const card = document.getElementById('question-card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = '';
+
+  // Preenche
+  document.getElementById('q-num').textContent = `Q${state.questionIndex + 1}`;
+  document.getElementById('q-topic').textContent = q.topic;
+  document.getElementById('q-pts').textContent = `+${q.pts} pts`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('phase-tag').textContent = phase.name;
+
+  // Opções
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i, btn);
+    grid.appendChild(btn);
+  });
+
+  // Progresso
+  updateProgress();
+
+  // Timer
+  startTimer(q);
+}
+
+function startTimer(q) {
+  clearInterval(state.timerInterval);
+  state.timer = 30;
+  const bar = document.getElementById('timer-bar');
+  const txt = document.getElementById('timer-text');
+  bar.style.width = '100%';
+  bar.classList.remove('danger');
+
+  state.timerInterval = setInterval(() => {
+    if (state.paused || state.answered) return;
+    state.timer--;
+    const pct = (state.timer / 30) * 100;
+    bar.style.width = pct + '%';
+    txt.textContent = state.timer + 's';
+    if (state.timer <= 10) bar.classList.add('danger');
+    if (state.timer <= 0) {
+      clearInterval(state.timerInterval);
+      timeOut();
+    }
+  }, 1000);
+}
+
+function timeOut() {
+  state.answered = true;
+  state.wrong++;
+  state.combo = 0;
+  loseLife();
+  const q = state.phaseQuestions[state.questionIndex];
+  const opts = document.querySelectorAll('.option-btn');
+  opts[q.correct].classList.add('correct');
+  showFeedback(false, '⏰ TEMPO ESGOTADO! ' + q.explain, q);
+  flashScreen(false);
+}
+
+function selectAnswer(idx, btn) {
+  if (state.answered) return;
+  state.answered = true;
+  clearInterval(state.timerInterval);
+
+  const q = state.phaseQuestions[state.questionIndex];
+  const opts = document.querySelectorAll('.option-btn');
+  opts.forEach(b => b.disabled = true);
+
+  const isCorrect = idx === q.correct;
+  const timeBonus = Math.floor(state.timer * 3);
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    const points = q.pts + timeBonus;
+    state.score += points;
+    state.correct++;
+    state.combo++;
+    if (state.combo > state.maxCombo) state.maxCombo = state.combo;
+
+    showFloatEffect(`+${points}`, btn, '#00ff88');
+    if (state.combo >= 2) showCombo(state.combo);
+    spawnParticles(btn.getBoundingClientRect().left + btn.offsetWidth/2, btn.getBoundingClientRect().top, '#00ff88', 15);
+    showFeedback(true, q.explain, q);
+  } else {
+    btn.classList.add('wrong');
+    opts[q.correct].classList.add('correct');
+    state.wrong++;
+    state.combo = 0;
+    loseLife();
+    spawnParticles(btn.getBoundingClientRect().left + btn.offsetWidth/2, btn.getBoundingClientRect().top, '#ff3355', 15);
+    showFeedback(false, q.explain, q);
+  }
+
+  flashScreen(isCorrect);
+  updateHUD();
+  updateProgress(idx, isCorrect, q.correct);
+}
+
+function showFeedback(correct, text, q) {
+  const fb = document.getElementById('feedback-bar');
+  fb.className = 'feedback-bar show ' + (correct ? 'correct-fb' : 'wrong-fb');
+  document.getElementById('fb-icon').textContent = correct ? '✅' : '❌';
+  document.getElementById('fb-title').textContent = correct ? 'CORRETO! +' + (q.pts + Math.floor(state.timer*3)) + ' pts' : 'ERRADO!';
+  document.getElementById('fb-text').textContent = text;
+}
+
+function nextQuestion() {
+  if (!state.answered) return;
+  document.getElementById('feedback-bar').classList.remove('show');
+
+  if (state.lives <= 0) { endGame(); return; }
+
+  state.questionIndex++;
+  setTimeout(loadQuestion, 300);
+}
+
+function loseLife() {
+  state.lives = Math.max(0, state.lives - 1);
+  updateHUD();
+  if (state.lives <= 0 && state.answered) {
+    // game over depois do feedback
+  }
+}
+
+function endPhase(won) {
+  clearInterval(state.timerInterval);
+  const phase = PHASES[state.phase];
+
+  document.getElementById('pe-emoji').textContent = won ? phase.icon : '💀';
+  document.getElementById('pe-title').textContent = won ? 'FASE CONCLUÍDA!' : 'VOCÊ FALHOU!';
+  document.getElementById('pe-title').className = 'phase-end-title ' + (won ? 'win' : 'fail');
+  document.getElementById('pe-sub').textContent = `${phase.name}`;
+  document.getElementById('pe-score').textContent = state.score;
+  document.getElementById('pe-correct').textContent = state.correct;
+  document.getElementById('pe-wrong').textContent = state.wrong;
+  document.getElementById('pe-tip').textContent = phase.tip;
+
+  const nextBtn = document.getElementById('pe-btn-next');
+  if (state.phase + 1 < PHASES.length && won) {
+    nextBtn.textContent = 'PRÓXIMA FASE ▶';
+    nextBtn.style.display = 'inline-block';
+  } else if (won) {
+    nextBtn.textContent = '🏆 VER RESULTADO FINAL';
+    nextBtn.style.display = 'inline-block';
+  } else {
+    nextBtn.style.display = 'none';
+  }
+
+  showScreen('screen-phase-end');
+}
+
+function endGame() {
+  clearInterval(state.timerInterval);
+  document.getElementById('go-score').textContent = state.score + ' pts';
+  document.getElementById('go-tip').textContent = PHASES[state.phase].tip;
+  showScreen('screen-gameover');
+}
+
+function nextPhase() {
+  if (state.phase + 1 >= PHASES.length) {
+    showVictory(); return;
+  }
+  state.phase++;
+  state.questionIndex = 0;
+  state.phaseQuestions = shuffle([...PHASES[state.phase].questions]);
+  state.correct = 0;
+  state.wrong = 0;
+  showScreen('screen-game');
+  loadQuestion();
+  updateHUD();
+  rotateTicker();
+}
+
+function showVictory() {
+  const stars = state.score >= 4000 ? '⭐⭐⭐' : state.score >= 2500 ? '⭐⭐' : '⭐';
+  document.getElementById('v-score').textContent = state.score + ' pts';
+  document.getElementById('victory-stars').textContent = stars;
+  renderRanking();
+  showScreen('screen-victory');
+}
+
+function saveScore() {
+  const name = document.getElementById('name-input').value.trim() || 'ANONIMO';
+  saveHighscore(name, state.score);
+  renderRanking();
+}
+
+function renderRanking() {
+  const list = document.getElementById('ranking-list');
+  const hs = state.highscores.slice(0, 5);
+  if (!hs.length) { list.innerHTML = '<div style="color:var(--dim);font-size:12px;text-align:center">Nenhum recorde ainda</div>'; return; }
+  list.innerHTML = hs.map((h, i) => `
+    <div class="rank-row ${h.score === state.score ? 'highlight' : ''}">
+      <span class="rank-n">#${i+1}</span>
+      <span class="rank-name">${h.name}</span>
+      <span class="rank-score">${h.score}</span>
+    </div>
+  `).join('');
+}
+
+function restartGame() {
+  startGame(state.phase);
+}
+
+// =============================================
+//  HUD & UI
+// =============================================
+function updateHUD() {
+  document.getElementById('hud-score').textContent = state.score;
+  const lives = document.getElementById('lives-display');
+  lives.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const h = document.createElement('span');
+    h.className = 'heart' + (i >= state.lives ? ' lost' : '');
+    h.textContent = '❤';
+    lives.appendChild(h);
+  }
+}
+
+function updateProgress(selectedIdx, correct, correctIdx) {
+  const dots = document.getElementById('progress-dots');
+  if (!dots) return;
+  const total = state.phaseQuestions.length;
+  dots.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    if (i < state.questionIndex) {
+      d.className = 'pdot done';
+    } else if (i === state.questionIndex) {
+      if (selectedIdx !== undefined) {
+        d.className = correct ? 'pdot done' : 'pdot wrong-dot';
+      } else {
+        d.className = 'pdot current';
+      }
+    } else {
+      d.className = 'pdot';
+    }
+    dots.appendChild(d);
+  }
+}
+
+function showFloatEffect(text, el, color) {
+  const r = el.getBoundingClientRect();
+  const div = document.createElement('div');
+  div.className = 'float-effect';
+  div.style.cssText = `left:${r.left + r.width/2}px;top:${r.top}px;color:${color};`;
+  div.textContent = text;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 1200);
+}
+
+function showCombo(n) {
+  const el = document.getElementById('combo-display');
+  el.textContent = `🔥 COMBO x${n}!`;
+  el.className = 'combo-display show';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function flashScreen(correct) {
+  const el = document.getElementById('screen-flash');
+  el.className = 'screen-flash ' + (correct ? 'correct-flash' : 'wrong-flash');
+  el.style.opacity = '1';
+  setTimeout(() => el.style.opacity = '0', 200);
+}
+
+function togglePause() {
+  state.paused = !state.paused;
+  document.getElementById('modal-pause').classList.toggle('open', state.paused);
+}
+
+function rotateTicker() {
+  const el = document.getElementById('ticker-text');
+  const tip = TICKER_TIPS[Math.floor(Math.random() * TICKER_TIPS.length)];
+  el.textContent = tip;
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = 'ticker 25s linear infinite';
+}
+
+// Teclado: Enter = próxima, P = pausa
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('screen-game') && !document.getElementById('screen-game').classList.contains('hidden')) {
+    if (state.answered) nextQuestion();
+  }
+  if (e.key === 'p' || e.key === 'P') togglePause();
+  if (e.key >= '1' && e.key <= '4') {
+    const opts = document.querySelectorAll('.option-btn');
+    const idx = parseInt(e.key) - 1;
+    if (opts[idx] && !state.answered) opts[idx].click();
+  }
+});
+
+// Init
+loadHighscores();
+setInterval(rotateTicker, 26000);
+</script>
+</body>
+</html>
