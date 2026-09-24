@@ -1,3 +1,4 @@
+import dataclasses
 from datetime import date
 from pathlib import Path
 
@@ -40,7 +41,7 @@ class IAFalsa:
 
 @pytest.fixture
 def ambiente(tmp_path):
-    cfg = carregar()
+    cfg = dataclasses.replace(carregar(), etapa=2)
     banco = Banco(tmp_path / "t.db")
     wb = Workbook()
     ws = wb.active
@@ -134,3 +135,12 @@ def test_painel(ambiente, monkeypatch):
     assert banco.triagem("1001").checklist[0].feito_por == "ana"
     c.post("/senha", auth=auth, data={"cpf": "12345678909", "resultado": "falhou"})
     assert banco.testes_senha("12345678909")[0]["resultado"] == "falhou"
+
+
+def test_etapa_1_so_publicacao_ia_e_prazo(ambiente):
+    cfg, banco, advbox, drive = ambiente
+    cfg = dataclasses.replace(cfg, etapa=1)
+    pub = importar_arquivo(EXEMPLO, cfg.planilhas["expedit"])[0][0]
+    t = Triador(cfg, banco, IAFalsa({"1001": interp()}), advbox, drive).triar(pub, HOJE)
+    assert [i.id for i in t.checklist] == ["sistema", "peca", "protocolo"]
+    assert t.prazo.fatal == date(2026, 10, 19)

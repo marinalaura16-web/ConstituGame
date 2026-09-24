@@ -131,12 +131,13 @@ def _item_sistema(pub: Publicacao, interp: Interpretacao | None) -> ItemChecklis
             avisos.append(
                 f"o número no texto ({interp.numero_processo}) é diferente do cadastrado no Expedit ({pub.numero_processo})"
             )
-    if not pub.numero_processo:
-        avisos.append("publicação sem processo vinculado no Expedit")
-    if not pub.cliente_nome and not pub.cliente_cpf:
-        avisos.append("publicação sem cliente vinculado no Expedit")
+    if pub.origem != "manual":  # texto colado à mão não tem cadastro para comparar
+        if not pub.numero_processo:
+            avisos.append("publicação sem processo vinculado no Expedit")
+        if not pub.cliente_nome and not pub.cliente_cpf:
+            avisos.append("publicação sem cliente vinculado no Expedit")
     detalhe = (
-        f"Processo {pub.numero_processo or '—'} | Cliente {pub.cliente_nome or '—'} | "
+        f"Processo {pub.numero_processo or (interp.numero_processo if interp else None) or '—'} | Cliente {pub.cliente_nome or '—'} | "
         f"{pub.orgao or pub.tribunal or 'órgão não informado'}. Conferir se o processo está cadastrado "
         "e atualizado no Expedit (partes, benefício, fase)."
     )
@@ -240,33 +241,10 @@ class Triador:
         prov = self.cfg.providencias[chave]
         prazo = calcular_prazo(pub, interp, prov, self.cfg, hoje)
 
-        nome = pub.cliente_nome or (interp.cliente_nome if interp else None)
-        processo = pub.numero_processo or (interp.numero_processo if interp else None)
-        ficha = self.advbox.buscar(cpf=pub.cliente_cpf, processo=processo, nome=nome)
-        cpf = pub.cliente_cpf or (normalizar_cpf(ficha.dados.get("cpf")) if ficha else None)
-
-        catalogo = self.cfg.fluxos.get("documentos", {})
-        exigidos = list(prov.get("documentos", []))
-        res_drive = None
-        if self.drive and exigidos:
-            res_drive = self.drive.verificar(cpf=cpf, nome=nome, exigidos=exigidos, catalogo=catalogo)
-
-        itens = [
-            _item_sistema(pub, interp),
-            _item_drive(res_drive, exigidos, catalogo, interp.documentos_mencionados if interp else []),
-        ]
-        if prov.get("precisa_govbr"):
-            if cpf:
-                av = avaliar_senha_govbr(
-                    self.banco.testes_senha(cpf), bool(ficha and ficha.tem_senha_govbr), hoje,
-                    self.cfg.data_migracao, self.cfg.fluxos.get("senha_valida_por_dias", 30),
-                )
-                itens.append(ItemChecklist(id="senha_govbr", titulo="Senha gov.br / Meu INSS", status=av.status, detalhe=av.detalhe))
-            else:
-                itens.append(ItemChecklist(id="senha_govbr", titulo="Senha gov.br / Meu INSS", status="atencao",
-                                           detalhe="CPF do cliente não encontrado no Expedit nem no Advbox — "
-                                                   "cadastrar o CPF para controlar os testes de senha."))
-        itens.append(_item_advbox(ficha, self.advbox.carregada))
+        itens = [_item_sistema(pub, interp)]
+        # Etapa 1: só publicação + IA + prazo. Etapa 2 liga Drive, senha gov.br e planilha do Advbox.
+        if self.cfg.etapa >= 2:
+            itens += self._itens_integracoes(pub, interp, prov, hoje)
         itens.append(_item_peca(chave, prov, prazo, interp, erro))
         if prov.get("peca"):
             itens.append(ItemChecklist(
@@ -286,6 +264,35 @@ class Triador:
             prazo=prazo,
             checklist=itens,
         )
+
+    def _itens_integracoes(self, pub: Publicacao, interp: Interpretacao | None, prov: dict, hoje: date) -> list[ItemChecklist]:
+        nome = pub.cliente_nome or (interp.cliente_nome if interp else None)
+        processo = pub.numero_processo or (interp.numero_processo if interp else None)
+        ficha = self.advbox.buscar(cpf=pub.cliente_cpf, processo=processo, nome=nome)
+        cpf = pub.cliente_cpf or (normalizar_cpf(ficha.dados.get("cpf")) if ficha else None)
+
+        catalogo = self.cfg.fluxos.get("documentos", {})
+        exigidos = list(prov.get("documentos", []))
+        res_drive = None
+        if self.drive and exigidos:
+            res_drive = self.drive.verificar(cpf=cpf, nome=nome, exigidos=exigidos, catalogo=catalogo)
+
+        itens = [
+            _item_drive(res_drive, exigidos, catalogo, interp.documentos_mencionados if interp else []),
+        ]
+        if prov.get("precisa_govbr"):
+            if cpf:
+                av = avaliar_senha_govbr(
+                    self.banco.testes_senha(cpf), bool(ficha and ficha.tem_senha_govbr), hoje,
+                    self.cfg.data_migracao, self.cfg.fluxos.get("senha_valida_por_dias", 30),
+                )
+                itens.append(ItemChecklist(id="senha_govbr", titulo="Senha gov.br / Meu INSS", status=av.status, detalhe=av.detalhe))
+            else:
+                itens.append(ItemChecklist(id="senha_govbr", titulo="Senha gov.br / Meu INSS", status="atencao",
+                                           detalhe="CPF do cliente não encontrado no Expedit nem no Advbox — "
+                                                   "cadastrar o CPF para controlar os testes de senha."))
+        itens.append(_item_advbox(ficha, self.advbox.carregada))
+        return itens
 
     def triar_pendentes(self, hoje: date | None = None) -> list[Triagem]:
         feitas = []

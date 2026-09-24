@@ -36,6 +36,7 @@ class Config:
     drive_credenciais: Path | None
     modelo: str
     esforco: str
+    etapa: int = 1
     smtp: dict = field(default_factory=dict)
     painel_usuario: str = "escritorio"
     painel_senha: str | None = None
@@ -80,6 +81,7 @@ def carregar() -> Config:
         drive_credenciais=_caminho(e("GOOGLE_CREDENCIAIS")),
         modelo=e("ROBO_MODELO", "claude-opus-5"),
         esforco=e("ROBO_ESFORCO", "high"),
+        etapa=int(e("ROBO_ETAPA", "1")),
         smtp={
             "host": e("SMTP_HOST"),
             "porta": int(e("SMTP_PORTA", "587")),

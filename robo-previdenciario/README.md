@@ -28,6 +28,19 @@ Expedit (exportação) ──► importar ──► IA interpreta ──► cál
                          Checklist no painel + e-mail diário
 ```
 
+## Implantação por etapas
+
+| Etapa | O que roda | Como ligar |
+|---|---|---|
+| **1 (atual)** | Publicação → IA interpreta → peça, prazo fatal e prazo interno | `ROBO_ETAPA=1` (padrão) |
+| 2 | + Google Drive, senha gov.br e planilha do Advbox | `ROBO_ETAPA=2` |
+
+Teste da etapa 1 sem depender do Expedit: salve o texto de uma publicação num arquivo `.txt` e rode
+
+```bash
+python -m robo.cli interpretar publicacao.txt --disponibilizacao 24/09/2026 --tribunal TRF4
+```
+
 ## Instalação (uma vez)
 
 Requer Python 3.11 ou mais novo.
