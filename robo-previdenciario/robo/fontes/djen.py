@@ -133,6 +133,11 @@ class ClienteDJEN:
                     time.sleep(float(e.headers.get("Retry-After") or espera))
                     espera *= 2
                     continue
+                if e.code == 403 and "country" in e.read().decode("latin-1", "replace"):
+                    raise ErroDJEN(
+                        "o DJEN só aceita acessos a partir do Brasil. Rode o robô num computador do "
+                        "escritório ou num servidor hospedado no Brasil (ex.: AWS/Google/Azure São Paulo)."
+                    ) from e
                 raise ErroDJEN(f"DJEN respondeu {e.code} para {url}") from e
             except (urllib.error.URLError, TimeoutError) as e:
                 if tentativa < self.tentativas:

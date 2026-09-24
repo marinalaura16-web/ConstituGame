@@ -53,6 +53,8 @@ python -m robo.cli interpretar publicacao.txt --disponibilizacao 24/09/2026 --tr
 
 ## Uso em vários computadores
 
+> **Importante:** o DJEN (CNJ) bloqueia acessos de fora do Brasil. O robô precisa rodar numa máquina no Brasil: um computador do escritório ou um servidor em São Paulo.
+
 O robô roda em **um único lugar** e todo mundo acessa o painel pelo navegador (Chrome, Edge), sem instalar nada em cada máquina:
 
 - **Opção simples:** um computador do escritório que fique sempre ligado roda o robô e o painel. Os outros abrem `http://IP-DESSE-PC:8000` na rede interna.
