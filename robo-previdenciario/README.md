@@ -32,14 +32,31 @@ Expedit (exportação) ──► importar ──► IA interpreta ──► cál
 
 | Etapa | O que roda | Como ligar |
 |---|---|---|
-| **1 (atual)** | Publicação → IA interpreta → peça, prazo fatal e prazo interno | `ROBO_ETAPA=1` (padrão) |
+| **1 (atual)** | Baixa do **DJEN** pelas OABs do escritório → IA interpreta → peça, prazo fatal e prazo interno | `ROBO_ETAPA=1` (padrão) |
 | 2 | + Google Drive, senha gov.br e planilha do Advbox | `ROBO_ETAPA=2` |
 
-Teste da etapa 1 sem depender do Expedit: salve o texto de uma publicação num arquivo `.txt` e rode
+Baixar direto do DJEN (consulta pública do CNJ, sem login), já interpretando:
+
+```bash
+python -m robo.cli djen --oab 12345/PR --de 23/09/2026 --ate 24/09/2026 --interpretar
+```
+
+As OABs podem ficar fixas no `.env` (`DJEN_OABS=12345/PR,67890/SC`), e aí basta `python -m robo.cli djen --interpretar`.
+Sem `--de`, o robô busca os últimos 3 dias, para cobrir fim de semana. Publicação já baixada não entra em dobro.
+A resposta original do DJEN fica salva em `dados/djen_ultima_resposta.json`, para conferência.
+
+Para testar uma publicação avulsa, sem DJEN nem Expedit: salve o texto de uma publicação num arquivo `.txt` e rode
 
 ```bash
 python -m robo.cli interpretar publicacao.txt --disponibilizacao 24/09/2026 --tribunal TRF4
 ```
+
+## Uso em vários computadores
+
+O robô roda em **um único lugar** e todo mundo acessa o painel pelo navegador (Chrome, Edge), sem instalar nada em cada máquina:
+
+- **Opção simples:** um computador do escritório que fique sempre ligado roda o robô e o painel. Os outros abrem `http://IP-DESSE-PC:8000` na rede interna.
+- **Opção recomendada para acesso de fora do escritório:** um servidor pequeno na nuvem (por exemplo Google Cloud, AWS ou uma VPS brasileira, a partir de ~R$ 50/mês), com login e HTTPS. Nesse caso, o painel precisa de login por colaborador antes de ir para a internet.
 
 ## Instalação (uma vez)
 

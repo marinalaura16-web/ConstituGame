@@ -1,5 +1,6 @@
 """Linha de comando.
 
+    python -m robo.cli djen --oab 12345/PR --de 23/09/2026 --ate 24/09/2026 [--interpretar]
     python -m robo.cli interpretar publicacao.txt --disponibilizacao 24/09/2026
     python -m robo.cli importar exportacao_expedit.xlsx
     python -m robo.cli triar
@@ -94,6 +95,42 @@ def _imprimir(t) -> None:
     print("=" * 70)
 
 
+def cmd_djen(cfg, banco, oabs: list[str], de: str | None, ate: str | None, interpretar: bool) -> None:
+    """Baixa do DJEN as publicações das OABs do escritório e grava as novas."""
+    from datetime import timedelta
+
+    from .fontes.djen import OAB, ClienteDJEN, ErroDJEN
+
+    oabs = oabs or [o for o in os.environ.get("DJEN_OABS", "").split(",") if o.strip()]
+    if not oabs:
+        sys.exit("Informe --oab 12345/PR ou DJEN_OABS=12345/PR,6789/SC no .env")
+    br = lambda s: datetime.strptime(s, "%d/%m/%Y").date()  # noqa: E731
+    fim = br(ate) if ate else date.today()
+    inicio = br(de) if de else fim - timedelta(days=3)  # cobre fim de semana/feriado
+    bruto = cfg.banco.parent / "djen_ultima_resposta.json"
+    cliente = ClienteDJEN(salvar_bruto=bruto)
+    novas = []
+    for texto in oabs:
+        oab = OAB.de_texto(texto)
+        try:
+            pubs = cliente.buscar(oab, inicio, fim)
+        except ErroDJEN as e:
+            sys.exit(f"Falha no DJEN para OAB {oab.numero}/{oab.uf}: {e}")
+        n = [p for p in pubs if banco.inserir_publicacao(p)]
+        novas += n
+        print(f"OAB {oab.numero}/{oab.uf}: {len(pubs)} publicações de {inicio:%d/%m} a {fim:%d/%m}, {len(n)} novas.")
+    for p in novas:
+        print(f"  - {p.data_disponibilizacao:%d/%m/%Y} {p.tribunal or ''} {p.numero_processo or ''} — {p.cliente_nome or 'cliente ?'}")
+    print(f"(resposta bruta do DJEN salva em {bruto})")
+    if interpretar and novas:
+        triador = _triador(cfg, banco)
+        for p in novas:
+            t = triador.triar(p)
+            banco.salvar_triagem(t)
+            print(f"\n>>> {p.numero_processo or p.id} — {p.cliente_nome or ''}")
+            _imprimir(t)
+
+
 def cmd_importar(cfg, banco, arquivo: Path) -> None:
     from .fontes.expedit import importar_arquivo
 
@@ -132,6 +169,11 @@ def cmd_resumo(cfg, banco, enviar: bool) -> None:
 def main(argv: list[str] | None = None) -> None:
     ap = argparse.ArgumentParser(prog="robo", description="Triagem de publicações previdenciárias")
     sub = ap.add_subparsers(dest="cmd", required=True)
+    dj = sub.add_parser("djen", help="baixar publicações do DJEN pelas OABs do escritório")
+    dj.add_argument("--oab", action="append", default=[], help="12345/PR (pode repetir)")
+    dj.add_argument("--de", help="DD/MM/AAAA (padrão: 3 dias atrás)")
+    dj.add_argument("--ate", help="DD/MM/AAAA (padrão: hoje)")
+    dj.add_argument("--interpretar", action="store_true", help="já passar pela IA e calcular prazo")
     i = sub.add_parser("interpretar", help="colar/ler UMA publicação e ver peça e prazo")
     i.add_argument("arquivo", type=Path, nargs="?")
     i.add_argument("--disponibilizacao", help="DD/MM/AAAA (padrão: hoje)")
@@ -150,7 +192,9 @@ def main(argv: list[str] | None = None) -> None:
 
     cfg = carregar()
     banco = Banco(cfg.banco)
-    if a.cmd == "interpretar":
+    if a.cmd == "djen":
+        cmd_djen(cfg, banco, a.oab, a.de, a.ate, a.interpretar)
+    elif a.cmd == "interpretar":
         cmd_interpretar(cfg, banco, a.arquivo, a.disponibilizacao, a.tribunal)
     elif a.cmd == "importar":
         cmd_importar(cfg, banco, a.arquivo)
