@@ -1,0 +1,199 @@
+# =============================================================================
+# FLUXOS DO ESCRITÓRIO — edite este arquivo para ajustar o robô SEM programar.
+# =============================================================================
+# Cada "providência" é o que precisa ser feito a partir de uma publicação.
+# O robô (IA) escolhe UMA destas chaves para cada publicação; o resto vem daqui.
+#
+#   peca ............ nome da peça a ser elaborada (ou null quando não há peça)
+#   prazo_padrao .... prazo legal em dias, usado quando a publicação NÃO diz o prazo
+#   contagem ........ "uteis" (processo judicial, CPC art. 219) ou
+#                     "corridos" (processo administrativo, Lei 9.784/99 art. 66)
+#   margem_interna .. quantos DIAS ÚTEIS antes do prazo fatal vence o prazo interno
+#   documentos ...... documentos que devem estar no Drive (chaves de `documentos` abaixo)
+#   precisa_govbr ... true se a tarefa exige acessar o Meu INSS do cliente
+#   responsavel ..... e-mail/nome de quem recebe por padrão (opcional)
+#   orientacao ...... dica curta que aparece no checklist
+# -----------------------------------------------------------------------------
+
+margem_interna_padrao: 2          # dias úteis antes do prazo fatal
+data_migracao_sistema: 2026-06-01 # quando saiu do Advbox e entrou no Expedit (AJUSTAR)
+senha_valida_por_dias: 30         # depois disso, pedir para testar a senha de novo
+
+providencias:
+  replica:
+    descricao: "Intimação para se manifestar sobre a contestação do INSS"
+    peca: "Réplica / impugnação à contestação"
+    prazo_padrao: 15
+    contagem: uteis
+    documentos: [procuracao, documento_identidade, cnis]
+    precisa_govbr: true
+    orientacao: "Conferir se o CNIS está atualizado antes de rebater a contestação."
+
+  manifestacao_laudo:
+    descricao: "Intimação para se manifestar sobre laudo pericial (médico ou social)"
+    peca: "Manifestação sobre o laudo pericial"
+    prazo_padrao: 15
+    contagem: uteis
+    documentos: [laudo_pericial, documentos_medicos]
+    precisa_govbr: false
+    orientacao: "Comparar o laudo com os atestados e exames do cliente; avaliar pedido de nova perícia/esclarecimentos."
+
+  quesitos_assistente:
+    descricao: "Perícia designada / nomeação de perito — prazo para quesitos e assistente técnico"
+    peca: "Quesitos e indicação de assistente técnico"
+    prazo_padrao: 15
+    contagem: uteis
+    documentos: [documentos_medicos]
+    precisa_govbr: false
+    orientacao: "Avisar o cliente da data/local da perícia (aqui a ligação É necessária) e pedir exames recentes."
+
+  recurso_inominado:
+    descricao: "Sentença desfavorável (total ou parcial) no Juizado Especial Federal"
+    peca: "Recurso inominado"
+    prazo_padrao: 10
+    contagem: uteis
+    margem_interna: 3
+    documentos: [procuracao, cnis]
+    precisa_govbr: false
+    orientacao: "Avaliar com o advogado responsável se há recurso antes de elaborar."
+
+  contrarrazoes_recurso_inominado:
+    descricao: "Intimação para contrarrazões ao recurso inominado do INSS"
+    peca: "Contrarrazões ao recurso inominado"
+    prazo_padrao: 10
+    contagem: uteis
+    documentos: []
+    precisa_govbr: false
+    orientacao: ""
+
+  apelacao:
+    descricao: "Sentença desfavorável (total ou parcial) na vara comum"
+    peca: "Apelação"
+    prazo_padrao: 15
+    contagem: uteis
+    margem_interna: 3
+    documentos: [procuracao, cnis]
+    precisa_govbr: false
+    orientacao: "Avaliar com o advogado responsável se há recurso antes de elaborar."
+
+  contrarrazoes_apelacao:
+    descricao: "Intimação para contrarrazões à apelação do INSS"
+    peca: "Contrarrazões à apelação"
+    prazo_padrao: 15
+    contagem: uteis
+    documentos: []
+    precisa_govbr: false
+    orientacao: ""
+
+  embargos_declaracao:
+    descricao: "Decisão/sentença com omissão, contradição, obscuridade ou erro material"
+    peca: "Embargos de declaração"
+    prazo_padrao: 5
+    contagem: uteis
+    margem_interna: 1
+    documentos: []
+    precisa_govbr: false
+    orientacao: "Prazo curto: priorizar."
+
+  agravo_instrumento:
+    descricao: "Decisão interlocutória desfavorável agravável (ex.: tutela indeferida)"
+    peca: "Agravo de instrumento"
+    prazo_padrao: 15
+    contagem: uteis
+    documentos: [procuracao]
+    precisa_govbr: false
+    orientacao: "Conferir se a decisão é agravável no rito do processo (no JEF, recurso é contra tutela)."
+
+  emenda_inicial:
+    descricao: "Determinação para emendar/complementar a petição inicial ou juntar documento"
+    peca: "Emenda à inicial / petição de juntada"
+    prazo_padrao: 15
+    contagem: uteis
+    documentos: [procuracao, documento_identidade, comprovante_residencia, cnis, indeferimento_inss]
+    precisa_govbr: true
+    orientacao: "Ler exatamente o que o juízo pediu; muitas vezes o documento já está no Drive."
+
+  manifestacao_calculos:
+    descricao: "Intimação para se manifestar sobre cálculos, RPV/precatório ou cumprimento de sentença"
+    peca: "Manifestação sobre cálculos"
+    prazo_padrao: 15
+    contagem: uteis
+    documentos: [cnis]
+    precisa_govbr: true
+    orientacao: "Conferir DIB, RMI e parcelas; checar no Meu INSS se o benefício foi implantado."
+
+  cumprimento_exigencia_inss:
+    descricao: "Exigência no processo administrativo do INSS (Meu INSS)"
+    peca: "Cumprimento de exigência"
+    prazo_padrao: 30
+    contagem: corridos
+    margem_interna: 5
+    documentos: [documento_identidade, comprovante_residencia, cnis]
+    precisa_govbr: true
+    orientacao: "A exigência é cumprida pelo Meu INSS — a senha gov.br precisa estar funcionando."
+
+  recurso_crps:
+    descricao: "Indeferimento administrativo do INSS — recurso ordinário ao CRPS"
+    peca: "Recurso ordinário ao CRPS"
+    prazo_padrao: 30
+    contagem: corridos
+    margem_interna: 5
+    documentos: [indeferimento_inss, cnis, procuracao]
+    precisa_govbr: true
+    orientacao: "Avaliar recurso administrativo x ação judicial com o advogado responsável."
+
+  audiencia:
+    descricao: "Audiência designada (instrução, conciliação)"
+    peca: null
+    prazo_padrao: null
+    contagem: uteis
+    documentos: []
+    precisa_govbr: false
+    orientacao: "Agendar, avisar cliente e testemunhas (rol de testemunhas, se ainda não houver)."
+
+  implantacao_beneficio:
+    descricao: "Sentença/acórdão favorável, trânsito em julgado ou ordem de implantação"
+    peca: null
+    prazo_padrao: null
+    contagem: uteis
+    documentos: []
+    precisa_govbr: true
+    orientacao: "Acompanhar a implantação no Meu INSS e avisar o cliente do resultado."
+
+  ciencia:
+    descricao: "Mero expediente, sem providência (ciência, remessa, conclusão, redistribuição)"
+    peca: null
+    prazo_padrao: null
+    contagem: uteis
+    documentos: []
+    precisa_govbr: false
+    orientacao: "Apenas registrar ciência."
+
+  outro:
+    descricao: "Nenhuma das anteriores — exige leitura do advogado"
+    peca: "A definir pelo advogado"
+    prazo_padrao: null
+    contagem: uteis
+    documentos: []
+    precisa_govbr: false
+    orientacao: "O robô não soube classificar com segurança. Leia a íntegra."
+
+# -----------------------------------------------------------------------------
+# DOCUMENTOS: como o robô reconhece cada documento pelo NOME do arquivo no Drive.
+# Basta que o nome contenha uma das palavras (sem acento, maiúscula ou minúscula).
+# -----------------------------------------------------------------------------
+documentos:
+  procuracao:            {nome: "Procuração",                  palavras: [procuracao, procura]}
+  documento_identidade:  {nome: "RG/CNH/CPF",                  palavras: [rg, cnh, cpf, identidade]}
+  comprovante_residencia: {nome: "Comprovante de residência",  palavras: [residencia, endereco, conta de luz, comprovante end]}
+  cnis:                  {nome: "CNIS",                        palavras: [cnis]}
+  indeferimento_inss:    {nome: "Carta de indeferimento/decisão INSS", palavras: [indeferimento, carta inss, comunicado de decisao]}
+  laudo_pericial:        {nome: "Laudo pericial",              palavras: [laudo pericial, laudo, pericia]}
+  documentos_medicos:    {nome: "Atestados/exames/relatórios médicos", palavras: [atestado, exame, relatorio medico, receita, laudo medico]}
+  ppp:                   {nome: "PPP / LTCAT",                 palavras: [ppp, ltcat]}
+  ctps:                  {nome: "CTPS",                        palavras: [ctps, carteira de trabalho]}
+
+# -----------------------------------------------------------------------------
+# Quem recebe cada publicação quando o Expedit não informar o responsável.
+# -----------------------------------------------------------------------------
+responsavel_padrao: "triagem@escritorio.com.br"

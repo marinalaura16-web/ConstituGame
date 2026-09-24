@@ -1,0 +1,8 @@
+.env
+dados/
+*.db
+__pycache__/
+.venv/
+config/conta-servico*.json
+*.xlsx
+!exemplos/*.xlsx

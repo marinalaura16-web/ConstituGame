@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<form method="get" class="cartao" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center">
+  <label>Responsável
+    <select name="responsavel" onchange="this.form.submit()">
+      <option value="">Todos</option>
+      {% for r in responsaveis %}<option value="{{ r }}" {% if r == filtro %}selected{% endif %}>{{ r }}</option>{% endfor %}
+    </select>
+  </label>
+  <label><input type="checkbox" name="concluidas" value="true" {% if concluidas %}checked{% endif %} onchange="this.form.submit()"> mostrar concluídas</label>
+  <span class="suave">{{ linhas|length }} publicação(ões)</span>
+</form>
+<div class="tabela">
+<table>
+  <thead><tr><th>Prazo interno</th><th>Fatal</th><th>Cliente / processo</th><th>O que fazer</th><th>Checklist</th><th>Responsável</th></tr></thead>
+  <tbody>
+  {% for t, pub in linhas %}
+    {% set vencido = t.prazo and t.prazo.vencido %}
+    {% set hoje_ = t.prazo and t.prazo.interno <= hoje %}
+    <tr class="{% if vencido %}vencido{% elif hoje_ %}hoje{% endif %}">
+      <td><b>{{ t.prazo.interno|br if t.prazo else "—" }}</b>{% if vencido %}<br><span class="etq atencao">VENCIDO</span>{% endif %}</td>
+      <td>{{ t.prazo.fatal|br if t.prazo else "—" }}</td>
+      <td><a href="/p/{{ t.publicacao_id }}">{{ pub.cliente_nome or "cliente não identificado" }}</a><br><span class="suave">{{ pub.numero_processo or "sem processo" }}</span></td>
+      <td>{{ t.peca or providencias[t.providencia].descricao }}
+        {% if t.erro_interpretacao %}<br><span class="etq atencao">triagem manual</span>{% endif %}</td>
+      <td>
+        {% set abertos = t.checklist|rejectattr("feito")|rejectattr("status", "equalto", "nao_se_aplica")|list %}
+        {% set alertas = abertos|selectattr("status", "equalto", "atencao")|list %}
+        {{ abertos|length }} aberto(s){% if alertas %} · <span class="atencao">{{ alertas|length }} alerta(s)</span>{% endif %}
+      </td>
+      <td class="suave">{{ t.responsavel }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="suave">Nenhuma publicação pendente. 🎉</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

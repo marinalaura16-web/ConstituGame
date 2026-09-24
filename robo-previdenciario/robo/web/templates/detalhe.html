@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block titulo %}{{ pub.cliente_nome or "Publicação" }} — triagem{% endblock %}
+{% block conteudo %}
+<p><a href="/">← voltar à fila</a></p>
+
+<div class="cartao">
+  <h2 style="margin:0 0 6px">{{ t.peca or providencias[t.providencia].descricao }}</h2>
+  <div class="grade">
+    <div><span class="suave">Cliente</span><br>{{ pub.cliente_nome or "—" }}</div>
+    <div><span class="suave">Processo</span><br>{{ pub.numero_processo or "—" }}</div>
+    <div><span class="suave">Prazo interno</span><br><b>{{ t.prazo.interno|br if t.prazo else "—" }}</b></div>
+    <div><span class="suave">Prazo fatal</span><br><b>{{ t.prazo.fatal|br if t.prazo else "—" }}</b>
+      {% if t.prazo and t.prazo.vencido %}<span class="etq atencao">VENCIDO</span>{% endif %}</div>
+    <div><span class="suave">Responsável</span><br>{{ t.responsavel }}</div>
+    <div><span class="suave">Disponibilizada</span><br>{{ pub.data_disponibilizacao|br }}</div>
+  </div>
+  {% if t.interpretacao %}
+    <p style="margin-bottom:0"><b>Resumo:</b> {{ t.interpretacao.resumo }}</p>
+    <p class="suave" style="margin:6px 0 0">Trecho: “{{ t.interpretacao.trecho_determinante }}” · confiança da IA: {{ t.interpretacao.confianca }}</p>
+  {% endif %}
+</div>
+
+<div class="cartao">
+  <h3 style="margin-top:0">Checklist do fluxo</h3>
+  {% for item in t.checklist %}
+  <div class="item {% if item.feito %}feito{% endif %}">
+    <form method="post" action="/p/{{ t.publicacao_id }}/item/{{ item.id }}">
+      <button title="marcar / desmarcar">{{ "☑" if item.feito else "☐" }}</button>
+    </form>
+    <div class="corpo">
+      <b>{{ item.titulo }}</b> <span class="etq {{ item.status }}">{{ {"ok":"verificado","pendente":"a fazer","atencao":"atenção","nao_se_aplica":"n/a"}[item.status] }}</span>
+      <div>{{ item.detalhe }}</div>
+      {% if item.feito_por %}<div class="suave">feito por {{ item.feito_por }}</div>{% endif %}
+      {% if item.id == "senha_govbr" and pub.cliente_cpf %}
+        <form method="post" action="/senha" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap">
+          <input type="hidden" name="cpf" value="{{ pub.cliente_cpf }}">
+          <input type="hidden" name="voltar" value="/p/{{ t.publicacao_id }}">
+          <input name="observacao" placeholder="observação (opcional)">
+          <button name="resultado" value="funcionou">✅ testei: funcionou</button>
+          <button name="resultado" value="falhou">❌ testei: falhou</button>
+          <button name="resultado" value="nova_senha_agencia">🏢 orientei nova senha</button>
+        </form>
+        {% if testes %}<div class="suave" style="margin-top:6px">Histórico: {% for x in testes[:5] %}{{ x.testado_em }} {{ x.resultado }}{% if x.testado_por %} ({{ x.testado_por }}){% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</div>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  <form method="post" action="/p/{{ t.publicacao_id }}/concluir" style="margin-top:12px">
+    <button class="primario">{{ "Reabrir" if t.concluida else "Concluir publicação" }}</button>
+  </form>
+</div>
+
+<div class="cartao">
+  <h3 style="margin-top:0">A classificação está errada?</h3>
+  <form method="post" action="/p/{{ t.publicacao_id }}/reclassificar" style="display:flex; gap:8px; flex-wrap:wrap">
+    <select name="providencia">
+      {% for k, p in providencias.items() %}<option value="{{ k }}" {% if k == t.providencia %}selected{% endif %}>{{ p.descricao }}</option>{% endfor %}
+    </select>
+    <button>Reclassificar e recalcular prazo</button>
+  </form>
+</div>
+
+<div class="cartao">
+  <h3 style="margin-top:0">Íntegra da publicação</h3>
+  <pre>{{ pub.texto }}</pre>
+</div>
+{% endblock %}

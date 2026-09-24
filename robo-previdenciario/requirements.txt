@@ -1,0 +1,11 @@
+anthropic>=1.8
+pydantic>=2.7
+pyyaml>=6
+openpyxl>=3.1
+fastapi>=0.110
+uvicorn>=0.29
+jinja2>=3.1
+python-multipart>=0.0.9
+# Somente para DRIVE_MODO=api:
+# google-api-python-client>=2.120
+# google-auth>=2.29

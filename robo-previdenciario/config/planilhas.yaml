@@ -1,0 +1,43 @@
+# =============================================================================
+# COMO LER AS PLANILHAS — ajuste os nomes de coluna para bater com os arquivos
+# reais. O robô ignora maiúsculas/minúsculas e acentos nos cabeçalhos.
+# =============================================================================
+
+# Exportação de publicações do Expedit (CSV ou XLSX).
+expedit:
+  aba: null                      # nome da aba no XLSX (null = primeira)
+  colunas:
+    id: ["id", "codigo", "código"]
+    data_disponibilizacao: ["data disponibilizacao", "disponibilizacao", "data da disponibilizacao", "data"]
+    data_publicacao: ["data publicacao", "data da publicacao", "publicacao"]
+    numero_processo: ["processo", "numero processo", "numero do processo", "nº processo"]
+    cliente_nome: ["cliente", "nome cliente", "parte", "nome"]
+    cliente_cpf: ["cpf", "cpf cliente"]
+    tribunal: ["tribunal", "diario", "orgao julgador tribunal"]
+    orgao: ["orgao", "vara", "orgao julgador"]
+    texto: ["texto", "conteudo", "teor", "publicacao completa", "inteiro teor"]
+    responsavel: ["responsavel", "advogado responsavel", "colaborador"]
+
+# Planilha antiga do Advbox (XLSX).
+advbox:
+  aba: null
+  colunas:
+    nome: ["nome", "cliente", "nome do cliente"]
+    cpf: ["cpf"]
+    processo: ["processo", "numero do processo", "processos"]
+    telefone: ["telefone", "celular", "whatsapp", "fone"]
+    email: ["email", "e-mail"]
+    endereco: ["endereco", "endereço"]
+    beneficio: ["beneficio", "tipo de beneficio", "especie"]
+    nb: ["nb", "numero do beneficio", "der/nb"]
+    der: ["der", "data entrada requerimento"]
+    senha_govbr: ["senha", "senha gov", "senha inss", "senha meu inss", "senha gov.br"]
+    observacoes: ["observacoes", "obs", "anotacoes"]
+
+  # Campos que, se vazios, justificam contatar o cliente.
+  # Se estiverem preenchidos, o robô avisa que NÃO precisa ligar para obtê-los.
+  essenciais: [telefone, endereco, beneficio, nb]
+
+  # Estes campos NUNCA são exibidos nem gravados pelo robô — só se informa
+  # "consta / não consta na planilha".
+  sigilosos: [senha_govbr]

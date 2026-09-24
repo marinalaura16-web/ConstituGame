@@ -1,0 +1,6 @@
+# Feriados municipais/estaduais e suspensões de expediente do tribunal (portarias).
+# Um por linha, no formato AAAA-MM-DD. Os feriados nacionais já são calculados
+# automaticamente (inclusive Carnaval, Semana Santa e Corpus Christi).
+# Exemplo:
+# - 2026-01-25   # aniversário da cidade
+[]
